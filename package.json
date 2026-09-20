@@ -7,7 +7,6 @@
     "dev": "vite dev --host",
     "dev:cron": "curl -s 'http://localhost:13575/cdn-cgi/local/scheduled?format=json'",
     "build": "vite build",
-    "preview": "vite preview",
     "deploy": "CLOUDFLARE_ENV=production bun run build && wrangler deploy",
     "deploy:staging": "CLOUDFLARE_ENV=staging bun run build && wrangler deploy",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/web/tsconfig.json",
