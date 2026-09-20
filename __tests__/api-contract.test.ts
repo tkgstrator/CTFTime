@@ -4,6 +4,7 @@ import {
   EventListResponseSchema,
   type EventSummary,
   EventSummarySchema,
+  hasStatedPrize,
   SummaryResponseSchema,
 } from '../src/shared/api'
 
@@ -28,6 +29,7 @@ const EVENT_SUMMARY_FIXTURE: EventSummary = {
   summary: 'Attack-Defense CTF for hardened services.',
   aiPolicy: 'unknown',
   aiSnippets: [],
+  hasPrize: true,
   announced: true,
 }
 
@@ -125,5 +127,26 @@ describe('SummaryResponseSchema', () => {
       expect(result.data.next.ctftimeParticipants).toBe(120)
       expect(result.data.next.discordParticipants).toBe(4)
     }
+  })
+})
+
+describe('hasStatedPrize', () => {
+  test('実質的な記載があれば true', () => {
+    expect(hasStatedPrize('Total Prize Pool: 2 BTC')).toBe(true)
+    expect(hasStatedPrize('Trophies are given to the top 3 teams')).toBe(true)
+  })
+
+  test('空と未定を表すだけの値は false', () => {
+    expect(hasStatedPrize('')).toBe(false)
+    expect(hasStatedPrize('   ')).toBe(false)
+    expect(hasStatedPrize('TBD')).toBe(false)
+    // 実データにあったタイポと、小文字・前後の空白も同じ扱いにする。
+    expect(hasStatedPrize('TDB')).toBe(false)
+    expect(hasStatedPrize(' tbd ')).toBe(false)
+  })
+
+  test('未定の語を含むだけの文章は記載ありとして扱う', () => {
+    // 「TBD」単体ではなく説明が続くなら、読む価値のある情報が入っている。
+    expect(hasStatedPrize('TBD — announced at the opening ceremony')).toBe(true)
   })
 })

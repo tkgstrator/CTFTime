@@ -11,6 +11,7 @@ import type { Dayjs } from 'dayjs'
 import { z } from 'zod'
 import {
   EMPTY_PRIZE_VALUES,
+  hasStatedPrize,
   type EventDetail,
   type EventQuery,
   type EventSummary,
@@ -188,6 +189,7 @@ export const toEventSummary = (event: StoredEvent, discordParticipants: number):
   summary: summarizeDescription(event.description),
   aiPolicy: event.aiPolicy,
   aiSnippets: event.aiSnippets,
+  hasPrize: hasStatedPrize(event.prizes),
   announced: event.announceMessageId !== null,
 })
 

@@ -101,6 +101,8 @@ export const EventRow = ({ event, showSummary = true, className }: EventRowProps
         ) : null}
         {/* CTFTime が Weight と呼んでいる値。本家を見に行ったときに迷わないよう英語のまま。 */}
         {event.weight > 0 ? <Badge variant="outline">Weight {event.weight}</Badge> : null}
+        {/* TBD だけの記載は付かない。絞り込みの「記載あり」と同じ判定。 */}
+        {event.hasPrize ? <Badge variant="secondary">賞金あり</Badge> : null}
         {/*
           記載なし（unknown）はほとんどのイベントが該当するので一覧では出さない。
           全行に同じバッジが並ぶだけで、AI 方針に触れている数件が逆に埋もれる。

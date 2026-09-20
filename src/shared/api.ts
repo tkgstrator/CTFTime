@@ -44,6 +44,17 @@ export const PRIZE_FILTERS = ['any', 'yes', 'no'] as const
  * 記載なしと同じ側に寄せる。SQLite の比較用に大文字で持つ。
  */
 export const EMPTY_PRIZE_VALUES = ['TBD', 'TDB', 'TBA', 'N/A', 'NA', 'NONE', '-', '--'] as const
+
+/**
+ * 賞金の記載が実質あるか。一覧のバッジ（hasPrize）と絞り込み（prize）が
+ * 食い違わないよう、判定の根拠は EMPTY_PRIZE_VALUES 1 つに寄せている。
+ * browse.ts の SQL は同じ定数を使って SQLite 側で同じ判定を書いている。
+ */
+export const hasStatedPrize = (prizes: string): boolean => {
+  const normalized = prizes.trim().toUpperCase()
+  if (normalized.length === 0) return false
+  return !EMPTY_PRIZE_VALUES.some((value) => value === normalized)
+}
 export const AI_FILTERS = ['any', ...AI_POLICY_VALUES] as const
 
 export const MAX_PER_PAGE = 50
@@ -118,6 +129,11 @@ export const EventSummarySchema = z.object({
   summary: text,
   aiPolicy: z.enum(AI_POLICY_VALUES),
   aiSnippets: z.array(text).default([]),
+  /**
+   * 賞金の記載が実質あるか。原文は長いので一覧には載せず、有無だけを渡す。
+   * TBD だけの記載は false 側（絞り込みの prize と同じ判定）。
+   */
+  hasPrize: z.boolean(),
   /** Discord に告知済みか。announce_message_id の有無で判定する。 */
   announced: z.boolean(),
 })
