@@ -17,7 +17,6 @@ export type Bindings = {
   ANNOUNCE_RESTRICTIONS: string
   ANNOUNCE_FORMATS: string
   LOOKAHEAD_DAYS: string
-  BACKFILL_DAYS: string
 }
 
 /** `Open,Academic` のようなカンマ区切りを配列にする。空要素は捨てる。 */
@@ -37,8 +36,6 @@ export const ConfigSchema = z.object({
   announceRestrictions: csvList,
   announceFormats: csvList,
   lookaheadDays: z.coerce.number().int().positive().max(365),
-  // CTFTime は 2011 年からあるので、全期間を指定できる幅を許す。
-  backfillDays: z.coerce.number().int().nonnegative().max(7300),
 })
 
 export type Config = z.infer<typeof ConfigSchema>
@@ -58,7 +55,6 @@ export const parseConfig = (env: Bindings): Config => {
     announceRestrictions: env.ANNOUNCE_RESTRICTIONS,
     announceFormats: env.ANNOUNCE_FORMATS,
     lookaheadDays: env.LOOKAHEAD_DAYS,
-    backfillDays: env.BACKFILL_DAYS,
   })
   if (!result.success) {
     const detail = result.error.issues

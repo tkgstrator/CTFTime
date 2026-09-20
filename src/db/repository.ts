@@ -187,47 +187,6 @@ export const countEvents = async (db: D1Database): Promise<number> => {
   return row === undefined ? 0 : row.count
 }
 
-/** 同期の進捗メモ。未設定なら null。 */
-export const getSyncState = async (db: D1Database, key: string): Promise<string | null> => {
-  const { results } = await db.prepare('SELECT value FROM sync_state WHERE key = ?').bind(key).all()
-  // 空文字を書く用途が無いので、来たら未設定と同じ扱いにする。
-  const parsed = z.array(z.object({ value: z.string().nonempty() })).safeParse(results)
-  if (!parsed.success) return null
-  const row = parsed.data[0]
-  return row === undefined ? null : row.value
-}
-
-export const setSyncState = async (
-  db: D1Database,
-  key: string,
-  value: string,
-  now: Dayjs,
-): Promise<void> => {
-  await db
-    .prepare(
-      `INSERT INTO sync_state (key, value, updated_at) VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-    )
-    .bind(key, value, now.toISOString())
-    .run()
-}
-
-/**
- * 保有しているイベントのうち最も早い開始時刻。events が空なら null。
- *
- * 過去の一括取り込みを「もう済んでいるか」の判定に使う。専用のフラグを持たず
- * これで代用しているのは、取り込みが済めば最古が自然と過去へ伸びて
- * 条件が成立しなくなるため。状態を別に持つと実態とずれる余地ができる。
- */
-export const getOldestEventStart = async (db: D1Database): Promise<string | null> => {
-  const { results } = await db.prepare('SELECT MIN(start_at) AS oldest FROM events').all()
-  // MIN() は行が無ければ NULL。空文字は start_at の NOT NULL 制約側で起こり得ないので弾く。
-  const parsed = z.array(z.object({ oldest: z.string().nonempty().nullable() })).safeParse(results)
-  if (!parsed.success) return null
-  const row = parsed.data[0]
-  return row === undefined ? null : row.oldest
-}
-
 export const getEvent = async (db: D1Database, eventId: number): Promise<StoredEvent | null> => {
   const { results } = await db.prepare('SELECT * FROM events WHERE id = ?').bind(eventId).all()
   const events = toEvents(results)
