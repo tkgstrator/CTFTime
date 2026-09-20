@@ -55,6 +55,31 @@ Gateway には繋がない。Discord の **Interactions Endpoint URL**（HTTPS �
 
 ## セットアップ
 
+所要 15 分ほど。Cloudflare の無料プランで動く。
+
+### 0. 用意するもの
+
+- [Bun](https://bun.sh)（wrangler もこれ経由で動かすので Node.js の準備は要らない）
+- Cloudflare アカウント（Workers と D1 が使えれば無料プランでよい）
+- Discord サーバの管理権限（Bot を招待するのに必要）
+
+`biome-plugins` を git submodule で参照しているので、クローンは再帰的に行う。
+
+```bash
+git clone --recursive <このリポジトリの URL> ctftime-bot
+cd ctftime-bot
+bun install
+```
+
+すでに `--recursive` なしでクローンしてしまった場合は `git submodule update --init` で追える。
+（`biome-plugins` が空だと `bun run lint` が落ちる）
+
+初回だけ Cloudflare にログインしておく。
+
+```bash
+bunx wrangler login
+```
+
 ### 1. Discord アプリケーションを作る
 
 [Discord Developer Portal](https://discord.com/developers/applications) で New Application。
@@ -94,6 +119,12 @@ bunx wrangler secret put DISCORD_PUBLIC_KEY
 bunx wrangler secret put DISCORD_BOT_TOKEN
 ```
 
+ローカルで動かす分は `.dev.vars` に書く（git 管理外）。
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
 ### 4. デプロイして Discord に繋ぐ
 
 ```bash
@@ -107,13 +138,18 @@ bun run deploy
 
 最後にスラッシュコマンドを登録する。
 
-```bash
-# 開発中はギルド限定が即時反映されるので楽
-GUILD_ID=<サーバID> DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... bun run discord:register
+認証情報は `.dev.vars` から読むので、手順 3 で用意してあれば引数は要らない。
 
-# 全サーバ向け（反映に最大 1 時間）
-DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... bun run discord:register
+```bash
+# 全サーバ向け（反映に最大 1 時間かかる）
+bun run discord:register
+
+# 開発中はギルド限定にすると即時反映される
+GUILD_ID=<サーバID> bun run discord:register
 ```
+
+`.dev.vars` を使わないなら `DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... bun run discord:register`
+のように環境変数で渡してもよい（環境変数のほうが優先される）。
 
 初回の cron 実行は**告知をしない**。イベントを取り込むだけで、全件を通知済みとして記録する
 （そうしないと既存の数十件が一斉に流れる）。「初期同期が完了しました」とだけ投稿される。
@@ -162,7 +198,7 @@ cron は 15 分おき。各通知は `notifications` テーブルで（イベン
 ## ローカル開発
 
 ```bash
-cp .dev.vars.example .dev.vars   # 認証情報を書き込む
+cp .dev.vars.example .dev.vars   # 手順 3 で作っていなければここで
 bun run db:migrate:local
 bun run dev --test-scheduled
 ```
@@ -176,6 +212,48 @@ bun run typecheck
 bun run lint
 bun test
 ```
+
+## GitHub Actions でのデプロイ
+
+`.github/workflows/deployment.yaml` が入っている。PR がマージされたとき、または手動実行で動く。
+マイグレーションを当ててからデプロイする順序になっているので、スキーマ変更を含む PR でも壊れない。
+
+リポジトリの **Settings > Secrets and variables > Actions** に 2 つ登録する。
+
+| Secret | 取得場所 |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare ダッシュボード > My Profile > API Tokens（`Edit Cloudflare Workers` テンプレート + D1 の編集権限） |
+| `CLOUDFLARE_ACCOUNT_ID` | Workers & Pages の右サイドバー |
+
+デフォルトブランチ宛の PR は production、それ以外は staging に出る。
+staging を使うなら `bunx wrangler d1 create ctftime-bot-staging` で DB を作り、
+`wrangler.toml` の `[[env.staging.d1_databases]]` に `database_id` を書いておく。
+secret も環境ごとに必要（`bunx wrangler secret put DISCORD_BOT_TOKEN --env staging`）。
+
+## つまずいたら
+
+**Interactions Endpoint URL の保存が弾かれる**
+Discord が署名付きの PING を投げて検証している。デプロイ済みか、URL の末尾が `/interactions` か、
+`DISCORD_PUBLIC_KEY` が Bot Token ではなく General Information の Public Key かを確認する。
+`bunx wrangler tail` を流しながら保存すると、リクエストが届いているかどうかが分かる。
+
+**`/ctf` がサーバに出てこない**
+グローバル登録は反映に最大 1 時間かかる。`GUILD_ID=... bun run discord:register` なら即時。
+それでも出ないなら、招待 URL に `applications.commands` スコープが入っていなかった可能性が高い
+（入れ直して招待し直す）。
+
+**通知が来ない**
+まず `bunx wrangler tail` で cron が動いているかを見る。動いているのに投稿されない場合は、
+`DISCORD_CHANNEL_ID` が正しいか、Bot がそのチャンネルで `Send Messages` と `Embed Links` を持つか、
+`ANNOUNCE_MIN_WEIGHT` などのフィルタで弾かれていないかを順に確認する。
+**初回の cron は仕様として告知しない**（「セットアップ」の手順 4 を参照）。
+
+**`bun run lint` が大量に落ちる**
+`biome-plugins` submodule が空。`git submodule update --init` で取得する。
+
+**`d1 migrations apply` が database not found になる**
+`wrangler.toml` の `database_id` が `REPLACE_WITH_D1_DATABASE_ID` のまま。
+`bunx wrangler d1 list` で ID を確認して書き込む。
 
 ## 既知の制約
 
