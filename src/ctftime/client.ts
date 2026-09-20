@@ -1,6 +1,7 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { type CtftimeEvent, CtftimeEventListSchema } from './schema'
+import { z } from 'zod'
+import { type CtftimeEvent, CtftimeEventSchema } from './schema'
 
 const API_ENDPOINT = 'https://ctftime.org/api/v1/events/'
 
@@ -32,22 +33,39 @@ export const fetchEventsBetween = async (from: Dayjs, to: Dayjs): Promise<Ctftim
     throw new Error(`CTFTime API が ${response.status} ${response.statusText} を返しました`)
   }
 
-  const result = CtftimeEventListSchema.safeParse(await response.json())
-  if (!result.success) {
-    const detail = result.error.issues
-      .slice(0, 3)
-      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-      .join(' / ')
-    throw new Error(`CTFTime API のレスポンス形式が想定と異なります — ${detail}`)
+  const rows = z.array(z.unknown()).safeParse(await response.json())
+  if (!rows.success) {
+    throw new Error('CTFTime API が配列を返しませんでした')
   }
+
+  /*
+   * 件ごとにパースして、壊れているものだけ捨てる。
+   *
+   * 古いイベントには CTFTime 側のデータが壊れているものが混ざっている
+   * （例: UCSB iCTF 2012 は duration.days が -1 で、終了時刻が開始より前）。
+   * リストごと失敗させると、その 1 件のせいで同じ範囲の数十件が丸ごと入らず、
+   * 過去の取り込みがそこで止まってしまう。
+   */
+  const result = rows.data.flatMap((row) => {
+    const parsed = CtftimeEventSchema.safeParse(row)
+    if (!parsed.success) {
+      console.warn(
+        'CTFTime のイベントを読めなかったため読み飛ばします',
+        parsed.error.issues[0]?.path.join('.'),
+        parsed.error.issues[0]?.message,
+      )
+      return []
+    }
+    return [parsed.data]
+  })
   // 上限ちょうどで返ってきたということは、その先が切り捨てられている可能性が高い。
   // 黙って取りこぼすのが一番困るので、気付けるように残す。
-  if (result.data.length >= FETCH_LIMIT) {
+  if (result.length >= FETCH_LIMIT) {
     console.warn(
       `CTFTime から上限の ${FETCH_LIMIT} 件が返りました。範囲内のイベントを取りこぼしている可能性があります`,
     )
   }
-  return result.data
+  return result
 }
 
 /**

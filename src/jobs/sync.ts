@@ -42,6 +42,9 @@ const matchesAnnounceFilter = (event: StoredEvent, config: Config, nowIso: strin
   return true
 }
 
+/** 一括取り込みを何日ずつに割るか。1 リクエストあたりの件数と応答サイズを抑えるため。 */
+const BACKFILL_CHUNK_DAYS = 365
+
 /**
  * 過去のイベントを CTFTime から取り込む。アーカイブを最初から厚くするため。
  *
@@ -61,9 +64,21 @@ const backfillPastEvents = async (env: Bindings, config: Config, now: Dayjs): Pr
   // 1 日ぶんの余裕を見る。取り込み直後に境界付近で再実行されるのを避けるため。
   if (oldest !== null && oldest <= from.add(1, 'day').toISOString()) return 0
 
-  const past = await fetchEventsBetween(from, now)
+  // 1 回の実行で入れるのは 1 年ぶんだけ。全期間を一度にやると fetch と D1 の
+  // batch が合わせて 150 回を超え、Workers のサブリクエスト上限に当たって落ちる。
+  // 保有している最古の 1 つ手前を毎回埋めていくので、cron を重ねれば端まで届く。
+  const to = oldest === null ? now : dayjs(oldest)
+  const candidate = to.subtract(BACKFILL_CHUNK_DAYS, 'day')
+  const chunkFrom = candidate.isBefore(from) ? from : candidate
+
+  const past = await fetchEventsBetween(chunkFrom, to)
+  // 空で返る範囲まで来たら、それ以上古いデータは無いとみなして止める。
   if (past.length === 0) return 0
-  await upsertEvents(env.DB, past.map(toStoredEvent), now)
+  await upsertEvents(
+    env.DB,
+    past.map((event) => toStoredEvent(event)),
+    now,
+  )
   return past.length
 }
 

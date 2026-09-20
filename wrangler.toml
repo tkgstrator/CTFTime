@@ -23,7 +23,8 @@ ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
 # 起動時に過去どこまで遡って取り込むか。0 で無効。一度埋まれば再実行されない。
-BACKFILL_DAYS = "365"
+# CTFTime は 2011 年から。6000 日で全期間を覆う（2026-09 時点で 2910 件）。
+BACKFILL_DAYS = "6000"
 
 # SPA（src/web）を同じ Worker から配信する。
 # directory は `vite build` が生成する設定に自動で入るのでここには書かない。
@@ -70,7 +71,8 @@ ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
 # 起動時に過去どこまで遡って取り込むか。0 で無効。一度埋まれば再実行されない。
-BACKFILL_DAYS = "365"
+# CTFTime は 2011 年から。6000 日で全期間を覆う（2026-09 時点で 2910 件）。
+BACKFILL_DAYS = "6000"
 
 [env.staging.assets]
 binding = "ASSETS"
@@ -105,7 +107,8 @@ ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
 # 起動時に過去どこまで遡って取り込むか。0 で無効。一度埋まれば再実行されない。
-BACKFILL_DAYS = "365"
+# CTFTime は 2011 年から。6000 日で全期間を覆う（2026-09 時点で 2910 件）。
+BACKFILL_DAYS = "6000"
 
 [env.production.assets]
 binding = "ASSETS"

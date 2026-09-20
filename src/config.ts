@@ -37,7 +37,8 @@ export const ConfigSchema = z.object({
   announceRestrictions: csvList,
   announceFormats: csvList,
   lookaheadDays: z.coerce.number().int().positive().max(365),
-  backfillDays: z.coerce.number().int().nonnegative().max(1825),
+  // CTFTime は 2011 年からあるので、全期間を指定できる幅を許す。
+  backfillDays: z.coerce.number().int().nonnegative().max(7300),
 })
 
 export type Config = z.infer<typeof ConfigSchema>
