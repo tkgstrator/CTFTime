@@ -31,6 +31,16 @@ export type StoredEvent = {
 }
 
 /**
+ * 参加表明した人。表示名とアバターは Discord から受け取った時点のもので、
+ * 古い行では空文字のことがある（0002 のマイグレーションより前に押された分）。
+ */
+export type Participant = {
+  userId: string
+  displayName: string
+  avatarHash: string
+}
+
+/**
  * 文字列比較だけで前後関係を判定したいので、必ず UTC の ISO8601 に揃える。
  * CTFTime は `+00:00` 形式のオフセット付きで返してくる。
  */

@@ -1,7 +1,7 @@
 import type { Dayjs } from 'dayjs'
 import { z } from 'zod'
 import { AI_POLICY_VALUES } from '../ctftime/ai-policy'
-import type { StoredEvent } from './model'
+import type { Participant, StoredEvent } from './model'
 
 /** 通知の種類。events × kind で 1 回しか送らない。 */
 export const NOTIFICATION_KINDS = ['new', 'reminder_24h', 'reminder_1h', 'start', 'end'] as const
@@ -275,15 +275,31 @@ export const listEventsForStage = async (
   return toEvents(results)
 }
 
+/**
+ * 参加表明を登録する。すでに表明済みなら joined_at は保ったまま
+ * 表示名とアバターだけ最新にする（改名やアイコン変更に追従させるため）。
+ */
 export const addParticipant = async (
   db: D1Database,
   eventId: number,
-  userId: string,
+  participant: Participant,
   now: Dayjs,
 ): Promise<void> => {
   await db
-    .prepare('INSERT OR IGNORE INTO participants (event_id, user_id, joined_at) VALUES (?, ?, ?)')
-    .bind(eventId, userId, now.toISOString())
+    .prepare(`
+      INSERT INTO participants (event_id, user_id, joined_at, display_name, avatar_hash)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(event_id, user_id) DO UPDATE SET
+        display_name = excluded.display_name,
+        avatar_hash = excluded.avatar_hash
+    `)
+    .bind(
+      eventId,
+      participant.userId,
+      now.toISOString(),
+      participant.displayName,
+      participant.avatarHash,
+    )
     .run()
 }
 
@@ -306,6 +322,55 @@ export const listParticipantIds = async (db: D1Database, eventId: number): Promi
   const parsed = z.array(z.object({ user_id: z.string().nonempty() })).safeParse(results)
   if (!parsed.success) return []
   return parsed.data.map((row) => row.user_id)
+}
+
+const ParticipantRowSchema = z.object({
+  user_id: z.string().nonempty(),
+  display_name: storedText,
+  avatar_hash: storedText,
+})
+
+/** 参加表明した人を、表示名とアバターつきで取り出す。Web UI 用。 */
+export const listParticipants = async (db: D1Database, eventId: number): Promise<Participant[]> => {
+  const { results } = await db
+    .prepare(`
+      SELECT user_id, display_name, avatar_hash FROM participants
+      WHERE event_id = ? ORDER BY joined_at ASC
+    `)
+    .bind(eventId)
+    .all()
+  const parsed = z.array(ParticipantRowSchema).safeParse(results)
+  if (!parsed.success) return []
+  return parsed.data.map((row) => ({
+    userId: row.user_id,
+    displayName: row.display_name,
+    avatarHash: row.avatar_hash,
+  }))
+}
+
+/**
+ * イベントごとの参加人数をまとめて数える。
+ * 一覧画面でイベントの数だけクエリを投げずに済ませるため。
+ */
+export const countParticipantsByEvent = async (
+  db: D1Database,
+  eventIds: number[],
+): Promise<Map<number, number>> => {
+  if (eventIds.length === 0) return new Map<number, number>()
+  const placeholders = eventIds.map(() => '?').join(', ')
+  const { results } = await db
+    .prepare(`
+      SELECT event_id, COUNT(*) AS count FROM participants
+      WHERE event_id IN (${placeholders})
+      GROUP BY event_id
+    `)
+    .bind(...eventIds)
+    .all()
+  const parsed = z
+    .array(z.object({ event_id: z.number().int(), count: z.number().int() }))
+    .safeParse(results)
+  if (!parsed.success) return new Map<number, number>()
+  return new Map(parsed.data.map((row) => [row.event_id, row.count]))
 }
 
 /** そのユーザが参加表明していて、まだ終わっていないイベント。 */

@@ -38,9 +38,14 @@ const formatVenue = (event: StoredEvent): string => {
   return event.location.length > 0 ? `オンサイト（${event.location}）` : 'オンサイト'
 }
 
+/**
+ * 参加表明の欄。人数を先頭に出しておくと、メンションを数えなくても規模が分かる。
+ * 人数だけは必ず残したいので、切り詰めるのはメンション側。
+ */
 const formatParticipants = (userIds: string[]): string => {
   if (userIds.length === 0) return 'まだいません'
-  return userIds.map((userId) => `<@${userId}>`).join(' ')
+  const mentions = userIds.map((userId) => `<@${userId}>`).join(' ')
+  return `**${userIds.length} 人**\n${truncate(mentions, 980)}`
 }
 
 /**
@@ -143,8 +148,10 @@ export const buildReminderPayload = (
   allowed_mentions: { users: participantIds },
 })
 
-/** 一覧表示用の 1 行。 */
-export const formatEventLine = (event: StoredEvent): string => {
+/** 一覧表示用の 1 行。参加人数は 0 人なら出さない（並んだときに邪魔になるため）。 */
+export const formatEventLine = (event: StoredEvent, participantCount?: number): string => {
   const ai = describeAiPolicy(event.aiPolicy)
-  return `**[${truncate(event.title, 60)}](${event.ctftimeUrl})**\n${timestamp(event.startAt, 'f')}（${timestamp(event.startAt, 'R')}）・${event.format}・${ai}\n\`/ctf info ${event.id}\``
+  const count = participantCount === undefined ? 0 : participantCount
+  const joined = count > 0 ? `・👥 ${count} 人` : ''
+  return `**[${truncate(event.title, 60)}](${event.ctftimeUrl})**\n${timestamp(event.startAt, 'f')}（${timestamp(event.startAt, 'R')}）・${event.format}・${ai}${joined}\n\`/ctf info ${event.id}\``
 }
