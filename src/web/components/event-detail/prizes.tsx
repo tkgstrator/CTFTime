@@ -15,7 +15,7 @@ export const PrizesSection = ({ prizes }: PrizesSectionProps) => (
     <h2 className="text-xl font-semibold">賞品・賞金</h2>
     {prizes.length > 0 ? (
       <>
-        <p className="whitespace-pre-line text-sm leading-relaxed">{prizes}</p>
+        <p className="max-w-3xl whitespace-pre-line text-sm leading-relaxed">{prizes}</p>
         <p className="text-xs text-muted-foreground">
           CTFTime に登録された原文です。条件や金額の確定状況は大会の公式サイトを確認してください。
         </p>

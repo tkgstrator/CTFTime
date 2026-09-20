@@ -13,7 +13,7 @@ export const DescriptionSection = ({ description }: DescriptionSectionProps) => 
   <div className="space-y-3">
     <h2 className="text-xl font-semibold">説明</h2>
     {description.length > 0 ? (
-      <p className="whitespace-pre-line text-sm leading-relaxed">{description}</p>
+      <p className="max-w-3xl whitespace-pre-line text-sm leading-relaxed">{description}</p>
     ) : (
       <p className="text-sm text-muted-foreground">説明は登録されていません。</p>
     )}

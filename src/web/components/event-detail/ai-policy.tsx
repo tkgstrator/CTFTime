@@ -42,7 +42,7 @@ export const AiPolicySection = ({ policy, snippets }: AiPolicySectionProps) => {
           {snippets.map((snippet) => (
             <li
               key={snippet}
-              className="border-l-2 border-muted-foreground/30 bg-muted px-4 py-3 text-sm text-muted-foreground"
+              className="max-w-3xl border-l-2 border-muted-foreground/30 bg-muted px-4 py-3 text-sm text-muted-foreground"
             >
               {snippet}
             </li>

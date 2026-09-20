@@ -40,7 +40,7 @@ function EventDetailPage() {
   const { event, participants, notifications } = Route.useLoaderData()
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
+    <section className="mx-auto max-w-5xl px-4 py-10">
       <EventHero event={event} />
       <Separator className="my-8" />
       <ScheduleSection event={event} />
