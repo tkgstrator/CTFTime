@@ -259,7 +259,7 @@ export const EventFilters = ({
               if (isEventSort(value)) onChange({ sort: value })
             }}
           >
-            <SelectTrigger id="filter-sort" className="w-full sm:w-64">
+            <SelectTrigger id="filter-sort" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
