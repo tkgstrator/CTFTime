@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, type ReactNode, useEffect, useState } from 'react'
 import { AI_POLICY_DETAIL } from '@/ctftime/ai-policy'
 import {
   AI_FILTERS,
@@ -27,6 +27,8 @@ type EventFiltersProps = {
   query: EventQuery
   facets: Facets
   onChange: (patch: FilterPatch) => void
+  /** 検索欄の隣に置くもの。横長になりがちな入力欄の幅を詰める用途で開催状況を差す。 */
+  trailing?: ReactNode
   className?: string
 }
 
@@ -85,7 +87,13 @@ const fromSelectValue = (value: string): string => (value === ALL_VALUE ? '' : v
  * 形式・参加制限・AI 判定・現地/オンライン・並べ替え・自由検索。
  * デスクトップの横並びとモバイルの Sheet 内、両方から同じ形で使う。
  */
-export const EventFilters = ({ query, facets, onChange, className }: EventFiltersProps) => {
+export const EventFilters = ({
+  query,
+  facets,
+  onChange,
+  trailing,
+  className,
+}: EventFiltersProps) => {
   const [searchDraft, setSearchDraft] = useState(query.q)
 
   // 戻る/進むや「すべて見る」リンクで URL 側から q が変わったら、下書きも合わせる。
@@ -108,20 +116,23 @@ export const EventFilters = ({ query, facets, onChange, className }: EventFilter
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      <form onSubmit={handleSearchSubmit} className="flex gap-2">
-        <Input
-          type="search"
-          placeholder="タイトルで検索"
-          aria-label="イベント名で検索"
-          value={searchDraft}
-          onChange={(event) => setSearchDraft(event.target.value)}
-        />
-        <Button type="submit" variant="secondary">
-          検索
-        </Button>
-      </form>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <form onSubmit={handleSearchSubmit} className="flex gap-2 sm:max-w-sm sm:flex-1">
+          <Input
+            type="search"
+            placeholder="タイトルで検索"
+            aria-label="イベント名で検索"
+            value={searchDraft}
+            onChange={(event) => setSearchDraft(event.target.value)}
+          />
+          <Button type="submit" variant="secondary">
+            検索
+          </Button>
+        </form>
+        {trailing}
+      </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium text-muted-foreground" htmlFor="filter-format">
             形式
@@ -238,7 +249,7 @@ export const EventFilters = ({ query, facets, onChange, className }: EventFilter
           </Select>
         </div>
 
-        <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-4">
+        <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium text-muted-foreground" htmlFor="filter-sort">
             並べ替え
           </label>

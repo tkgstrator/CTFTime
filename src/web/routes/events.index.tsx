@@ -81,14 +81,22 @@ function EventsPage() {
         </Sheet>
       </div>
 
+      {/* 狭い画面では絞り込みが Sheet の中なので、開催状況だけは外に出しておく。 */}
       <RangeTabs
         value={search.range}
         onChange={(range) => updateFilters({ range })}
-        className="mt-6"
+        className="mt-6 sm:hidden"
       />
 
-      <div className="mt-4 hidden sm:block">
-        <EventFilters query={search} facets={facets} onChange={updateFilters} />
+      <div className="mt-6 hidden sm:block">
+        <EventFilters
+          query={search}
+          facets={facets}
+          onChange={updateFilters}
+          trailing={
+            <RangeTabs value={search.range} onChange={(range) => updateFilters({ range })} />
+          }
+        />
       </div>
 
       <p className="mt-4 text-sm text-muted-foreground">
