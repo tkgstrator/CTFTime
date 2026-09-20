@@ -38,7 +38,7 @@ enabled = true
 head_sampling_rate = 1
 
 [dev]
-port = 8787
+port = 13575
 ip = "0.0.0.0"
 local_protocol = "http"
 

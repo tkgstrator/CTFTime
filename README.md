@@ -256,11 +256,11 @@ bun run db:migrate:local
 bun run dev
 ```
 
-`bun run dev` は Vite の開発サーバで、Worker と Web UI の両方を <http://localhost:8787> で配信する
+`bun run dev` は Vite の開発サーバで、Worker と Web UI の両方を <http://localhost:13575> で配信する
 （どちらもファイルを保存すると自動で反映される）。
 
 - `bun run dev:cron` で cron を手動実行できる。パターンを指定したいときは
-  `curl "http://localhost:8787/cdn-cgi/local/scheduled?cron=*/15+*+*+*+*"`
+  `curl "http://localhost:13575/cdn-cgi/local/scheduled?cron=*/15+*+*+*+*"`
   （Vite 経由では `wrangler dev --test-scheduled` の `/__scheduled` は使えない。
   叩いても SPA の HTML が返るだけで cron は走らないので注意）
 - `/interactions` は署名検証を通るので、試すには Ed25519 で署名した POST を投げる必要がある
