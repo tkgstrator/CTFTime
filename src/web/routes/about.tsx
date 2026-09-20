@@ -12,7 +12,7 @@ export const Route = createFileRoute('/about')({
 
 function AboutPage() {
   return (
-    <section className="mx-auto max-w-3xl space-y-10 px-4 py-10">
+    <section className="mx-auto max-w-5xl space-y-10 px-4 py-10">
       <div className="space-y-3">
         <h1 className="text-3xl font-semibold">About</h1>
         <p className="text-muted-foreground">

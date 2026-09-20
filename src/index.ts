@@ -28,7 +28,7 @@ app.post('/interactions', async (c) => {
   }
 
   const parsedBody = JSON.parse(body)
-  return c.json(await handleInteraction(parsedBody, c.env.DB))
+  return c.json(await handleInteraction(parsedBody, c.env.DB, config.siteUrl))
 })
 
 /**

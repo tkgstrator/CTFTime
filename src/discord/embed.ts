@@ -60,16 +60,22 @@ const formatAiPolicy = (event: StoredEvent): string => {
   return truncate(`${label}\n${quotes}`, 1024)
 }
 
+/** Web UI 側の詳細ページ。末尾のスラッシュ有無で URL が崩れないようにしておく。 */
+export const eventPageUrl = (event: StoredEvent, siteUrl: string): string =>
+  `${siteUrl.replace(/\/+$/, '')}/events/${event.id}`
+
 /**
  * 参加登録ボタン。押した人ごとに状態が違うので、参加・取消の両方を常に出す。
  * （1 つのメッセージは全員に同じものが見えるため、状態でボタンを出し分けられない）
  */
-export const buildJoinComponents = (event: StoredEvent) => [
+export const buildJoinComponents = (event: StoredEvent, siteUrl: string) => [
   {
     type: 1,
     components: [
       { type: 2, style: 3, label: '参加する', custom_id: `join:${event.id}` },
       { type: 2, style: 2, label: '参加を取り消す', custom_id: `leave:${event.id}` },
+      // Embed は 400 文字で説明を切るので、全文・AI 判定の根拠・過去の開催は Web で見てもらう。
+      { type: 2, style: 5, label: 'CTFTime Watch', url: eventPageUrl(event, siteUrl) },
       { type: 2, style: 5, label: 'CTFTime', url: event.ctftimeUrl },
     ],
   },
@@ -130,10 +136,14 @@ export const buildEventEmbed = (event: StoredEvent, options: EmbedOptions) => {
 }
 
 /** 新規イベントの告知。参加ボタン付きでチャンネルに投げる。 */
-export const buildAnnouncePayload = (event: StoredEvent, participantIds: string[]) => ({
-  content: '🆕 **新しい CTF が登録されました**',
+export const buildAnnouncePayload = (
+  event: StoredEvent,
+  participantIds: string[],
+  siteUrl: string,
+) => ({
+  content: '**新しい CTF が登録されました**',
   embeds: [buildEventEmbed(event, { stage: 'new', participantIds, withDescription: true })],
-  components: buildJoinComponents(event),
+  components: buildJoinComponents(event, siteUrl),
 })
 
 /** 参加表明済みの人に向けたリマインダ。メンションで確実に届かせる。 */
@@ -147,10 +157,18 @@ export const buildReminderPayload = (
   allowed_mentions: { users: participantIds },
 })
 
-/** 一覧表示用の 1 行。参加人数は 0 人なら出さない（並んだときに邪魔になるため）。 */
-export const formatEventLine = (event: StoredEvent, participantCount?: number): string => {
+/**
+ * 一覧表示用の 1 行。参加人数は 0 人なら出さない（並んだときに邪魔になるため）。
+ * タイトルのリンク先は CTFTime ではなく Web UI の詳細ページにする。
+ * 説明の全文・AI 判定の根拠・賞金の原文まで見られるのはこちらなので。
+ */
+export const formatEventLine = (
+  event: StoredEvent,
+  siteUrl: string,
+  participantCount?: number,
+): string => {
   const ai = describeAiPolicy(event.aiPolicy)
   const count = participantCount === undefined ? 0 : participantCount
   const joined = count > 0 ? `・参加 ${count} 人` : ''
-  return `**[${truncate(event.title, 60)}](${event.ctftimeUrl})**\n${timestamp(event.startAt, 'f')}（${timestamp(event.startAt, 'R')}）・${event.format}・${ai}${joined}\n\`/ctf info ${event.id}\``
+  return `**[${truncate(event.title, 60)}](${eventPageUrl(event, siteUrl)})**\n${timestamp(event.startAt, 'f')}（${timestamp(event.startAt, 'R')}）・${event.format}・${ai}${joined}\n\`/ctf info ${event.id}\``
 }

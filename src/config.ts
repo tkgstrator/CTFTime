@@ -16,6 +16,7 @@ export type Bindings = {
   ANNOUNCE_RESTRICTIONS: string
   ANNOUNCE_FORMATS: string
   LOOKAHEAD_DAYS: string
+  SITE_URL: string
 }
 
 /** `Open,Academic` のようなカンマ区切りを配列にする。空要素は捨てる。 */
@@ -34,6 +35,8 @@ export const ConfigSchema = z.object({
   announceRestrictions: csvList,
   announceFormats: csvList,
   lookaheadDays: z.coerce.number().int().positive().max(365),
+  /** Web UI の公開先。Discord から詳細ページへ導線を張るのに使う。 */
+  siteUrl: z.url(),
 })
 
 export type Config = z.infer<typeof ConfigSchema>
@@ -52,6 +55,7 @@ export const parseConfig = (env: Bindings): Config => {
     announceRestrictions: env.ANNOUNCE_RESTRICTIONS,
     announceFormats: env.ANNOUNCE_FORMATS,
     lookaheadDays: env.LOOKAHEAD_DAYS,
+    siteUrl: env.SITE_URL,
   })
   if (!result.success) {
     const detail = result.error.issues

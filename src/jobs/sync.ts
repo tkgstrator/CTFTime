@@ -79,7 +79,7 @@ export const syncEvents = async (env: Bindings, config: Config): Promise<SyncRes
       const messageId = await postMessage(
         config.botToken,
         config.channelId,
-        buildAnnouncePayload(event, []),
+        buildAnnouncePayload(event, [], config.siteUrl),
       )
       await setAnnounceMessageId(env.DB, event.id, messageId)
       return count + 1
