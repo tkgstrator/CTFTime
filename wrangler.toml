@@ -10,12 +10,12 @@ crons = ["*/15 * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "ctftime-bot"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "09dbb18e-60f2-4545-8891-1b497729b1df"
 migrations_dir = "migrations"
 
 [vars]
 # 新規イベントを告知するチャンネル
-DISCORD_CHANNEL_ID = ""
+DISCORD_CHANNEL_ID = "1551249458237538414"
 # 告知フィルタ
 ANNOUNCE_MIN_WEIGHT = "0"
 ANNOUNCE_ONSITE = "false"
@@ -51,11 +51,11 @@ workers_dev = true
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "ctftime-bot-staging"
-database_id = "REPLACE_WITH_STAGING_D1_DATABASE_ID"
+database_id = "108a351b-72fa-4268-91fa-5f3dced9f3c0"
 migrations_dir = "migrations"
 
 [env.staging.vars]
-DISCORD_CHANNEL_ID = ""
+DISCORD_CHANNEL_ID = "1551249458237538414"
 ANNOUNCE_MIN_WEIGHT = "0"
 ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
@@ -78,11 +78,11 @@ workers_dev = false
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "ctftime-bot"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "09dbb18e-60f2-4545-8891-1b497729b1df"
 migrations_dir = "migrations"
 
 [env.production.vars]
-DISCORD_CHANNEL_ID = ""
+DISCORD_CHANNEL_ID = "1551249458237538414"
 ANNOUNCE_MIN_WEIGHT = "0"
 ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
