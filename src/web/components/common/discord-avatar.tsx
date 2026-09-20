@@ -30,7 +30,11 @@ export const DiscordAvatar = ({
       {avatarHash.length > 0 ? (
         <AvatarImage src={buildAvatarUrl(userId, avatarHash)} alt={label} />
       ) : null}
-      <AvatarFallback>{label.slice(0, 2)}</AvatarFallback>
+      {/*
+        全角 2 文字は円からあふれて 2 行に折り返すので、頭 1 文字だけにする。
+        サロゲートペア（絵文字を含む表示名）を割らないよう Array.from で数える。
+      */}
+      <AvatarFallback className="uppercase">{Array.from(label)[0]}</AvatarFallback>
     </Avatar>
   )
 }
