@@ -170,13 +170,13 @@ const summarizeDescription = (description: string): string =>
   description.length > SUMMARY_LENGTH ? `${description.slice(0, SUMMARY_LENGTH)}…` : description
 
 /**
- * ctftimeParticipants（CTFTime 全体の登録チーム数）と discordParticipants
- * （このサーバーでの参加表明数）は別物なので、必ず別名で返す。
+ * ctftimeParticipants は CTFTime 全体の登録チーム数。Discord の参加表明数とは別物なので、
+ * 素の participants とは呼ばない。
  * announced は announce_message_id の有無で判定する
  * （notifications.kind = 'new' は初期同期のシード記録を含むため使えない）。
  * announce_message_id 自体は guild id を保存していないので使い道が無く、そのまま返さない。
  */
-export const toEventSummary = (event: StoredEvent, discordParticipants: number): EventSummary => ({
+export const toEventSummary = (event: StoredEvent): EventSummary => ({
   id: event.id,
   title: event.title,
   url: event.url,
@@ -188,7 +188,6 @@ export const toEventSummary = (event: StoredEvent, discordParticipants: number):
   location: event.location,
   weight: event.weight,
   ctftimeParticipants: event.participants,
-  discordParticipants,
   startAt: event.startAt,
   finishAt: event.finishAt,
   durationDays: event.durationDays,
@@ -200,8 +199,8 @@ export const toEventSummary = (event: StoredEvent, discordParticipants: number):
   announced: event.announceMessageId !== null,
 })
 
-export const toEventDetail = (event: StoredEvent, discordParticipants: number): EventDetail => ({
-  ...toEventSummary(event, discordParticipants),
+export const toEventDetail = (event: StoredEvent): EventDetail => ({
+  ...toEventSummary(event),
   description: event.description,
   prizes: event.prizes,
   organizers: event.organizers,

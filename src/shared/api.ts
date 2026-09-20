@@ -105,9 +105,9 @@ export const EVENT_QUERY_DEFAULTS: EventQuery = {
 /**
  * 一覧行。詳細との差は description（一覧は summary に切り詰める）と organizers だけ。
  *
- * 参加者数が 2 種類あることに注意。ctftimeParticipants は CTFTime 全体の登録チーム数、
- * discordParticipants はこの Discord サーバーでの参加表明数で、まったく別の数字。
- * どちらも participants と呼ぶと必ず誤読されるので、名前で区別する。
+ * 参加者数は CTFTime の登録チーム数だけを持つ。Discord の参加表明数は画面に出さなくなったので、
+ * 一覧のたびに集計する意味が無い。誰が出るかは詳細の participants に名前で並ぶ。
+ * CTFTime の値を participants と呼ぶと Discord 側と紛らわしいので、名前で区別したまま残す。
  */
 export const EventSummarySchema = z.object({
   id: z.number().int(),
@@ -121,7 +121,6 @@ export const EventSummarySchema = z.object({
   location: text,
   weight: z.number(),
   ctftimeParticipants: z.number().int(),
-  discordParticipants: z.number().int(),
   startAt: timestamp,
   finishAt: timestamp,
   durationDays: z.number().int(),

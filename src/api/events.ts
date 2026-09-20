@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import type { Bindings } from '@/config'
 import { listEvents, listNotifications, toEventDetail, toEventSummary } from '@/db/browse'
-import { countParticipantsByEvent, getEvent, listParticipants } from '@/db/repository'
+import { getEvent, listParticipants } from '@/db/repository'
 import type { EventDetailResponse, EventListResponse } from '@/shared/api'
 import { EventQuerySchema } from '@/shared/api'
 import { badRequestError, notFoundError } from './errors'
@@ -21,13 +21,7 @@ eventsRoute.get('/events', async (c) => {
   const query = parsedQuery.data
   const now = dayjs()
   const { items, total } = await listEvents(c.env.DB, query, now)
-
-  const eventIds = items.map((event) => event.id)
-  const participantCounts = await countParticipantsByEvent(c.env.DB, eventIds)
-  const summaries = items.map((event) => {
-    const count = participantCounts.get(event.id)
-    return toEventSummary(event, count === undefined ? 0 : count)
-  })
+  const summaries = items.map((event) => toEventSummary(event))
 
   const body: EventListResponse = {
     items: summaries,
@@ -57,7 +51,7 @@ eventsRoute.get('/events/:id', async (c) => {
   ])
 
   const body: EventDetailResponse = {
-    event: toEventDetail(event, participants.length),
+    event: toEventDetail(event),
     participants,
     notifications,
   }

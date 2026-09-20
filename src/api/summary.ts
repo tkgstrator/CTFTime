@@ -2,9 +2,7 @@ import dayjs from 'dayjs'
 import { Hono } from 'hono'
 import type { Bindings } from '@/config'
 import { getSummary, toEventSummary } from '@/db/browse'
-import type { StoredEvent } from '@/db/model'
-import { countParticipantsByEvent } from '@/db/repository'
-import type { EventSummary, SummaryResponse } from '@/shared/api'
+import type { SummaryResponse } from '@/shared/api'
 
 export const summaryRoute = new Hono<{ Bindings: Bindings }>()
 
@@ -14,20 +12,11 @@ export const summaryRoute = new Hono<{ Bindings: Bindings }>()
  */
 summaryRoute.get('/health', (c) => c.json({ ok: true }))
 
-const resolveNext = async (
-  db: D1Database,
-  event: StoredEvent | null,
-): Promise<EventSummary | null> => {
-  if (event === null) return null
-  const counts = await countParticipantsByEvent(db, [event.id])
-  const count = counts.get(event.id)
-  return toEventSummary(event, count === undefined ? 0 : count)
-}
-
 summaryRoute.get('/summary', async (c) => {
   const now = dayjs()
   const summary = await getSummary(c.env.DB, now)
-  const next = await resolveNext(c.env.DB, summary.next)
+  // 参加者数の集計を引かなくなったので、そのまま整形するだけでよい。
+  const next = summary.next === null ? null : toEventSummary(summary.next)
 
   const body: SummaryResponse = {
     totals: summary.totals,

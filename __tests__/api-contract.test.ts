@@ -21,7 +21,6 @@ const EVENT_SUMMARY_FIXTURE: EventSummary = {
   location: '',
   weight: 72.29,
   ctftimeParticipants: 120,
-  discordParticipants: 4,
   startAt: '2026-06-27T08:00:00.000Z',
   finishAt: '2026-06-27T20:00:00.000Z',
   durationDays: 0,
@@ -40,21 +39,11 @@ describe('EventSummarySchema', () => {
     if (result.success) expect(result.data).toEqual(EVENT_SUMMARY_FIXTURE)
   })
 
-  test('CTFTime の登録チーム数と Discord の参加表明数は別名で、混ざっていない', () => {
+  test('CTFTime の登録チーム数は素の participants と混ざらない名前で持つ', () => {
+    // Discord の参加表明数と取り違えられるのを防ぐため、名前で区別したまま残している。
     expect(EVENT_SUMMARY_FIXTURE).not.toHaveProperty('participants')
-    expect(EVENT_SUMMARY_FIXTURE.ctftimeParticipants).not.toBe(
-      EVENT_SUMMARY_FIXTURE.discordParticipants,
-    )
-  })
-
-  test('参加者数のどちらかが 0 でも 2 つのフィールドは残る', () => {
-    const fixture = { ...EVENT_SUMMARY_FIXTURE, discordParticipants: 0 }
-    const result = EventSummarySchema.safeParse(fixture)
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.discordParticipants).toBe(0)
-      expect(result.data.ctftimeParticipants).toBe(120)
-    }
+    expect(EVENT_SUMMARY_FIXTURE).not.toHaveProperty('discordParticipants')
+    expect(EVENT_SUMMARY_FIXTURE.ctftimeParticipants).toBe(120)
   })
 })
 
@@ -69,7 +58,7 @@ describe('EventListResponseSchema', () => {
     }
     const result = EventListResponseSchema.safeParse(body)
     expect(result.success).toBe(true)
-    if (result.success) expect(result.data.items[0]?.discordParticipants).toBe(4)
+    if (result.success) expect(result.data.items[0]?.ctftimeParticipants).toBe(120)
   })
 })
 
@@ -89,7 +78,6 @@ describe('EventDetailResponseSchema', () => {
     expect(result.success).toBe(true)
     if (result.success) {
       expect(result.data.event.ctftimeParticipants).toBe(120)
-      expect(result.data.event.discordParticipants).toBe(4)
     }
   })
 
@@ -114,7 +102,7 @@ describe('SummaryResponseSchema', () => {
     expect(SummaryResponseSchema.safeParse(body).success).toBe(true)
   })
 
-  test('next にも 2 種類の参加者数が別名で入る', () => {
+  test('next にも CTFTime の登録チーム数が入る', () => {
     const body = {
       totals: { events: 1, running: 0, upcoming: 1, past: 0, participants: 4, announced: 1 },
       lastSyncedAt: '2026-01-01T00:00:00.000Z',
@@ -125,7 +113,6 @@ describe('SummaryResponseSchema', () => {
     expect(result.success).toBe(true)
     if (result.success && result.data.next !== null) {
       expect(result.data.next.ctftimeParticipants).toBe(120)
-      expect(result.data.next.discordParticipants).toBe(4)
     }
   })
 })
