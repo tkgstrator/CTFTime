@@ -8,7 +8,6 @@ export type Bindings = {
   DB: D1Database
   /** wrangler.toml の [assets] が張るバインディング。SPA へのフォールバックに使う。 */
   ASSETS: Fetcher
-  DISCORD_APPLICATION_ID: string
   DISCORD_PUBLIC_KEY: string
   DISCORD_BOT_TOKEN: string
   DISCORD_CHANNEL_ID: string
@@ -27,7 +26,6 @@ const csvList = z
   .pipe(z.array(z.string().nonempty()))
 
 export const ConfigSchema = z.object({
-  applicationId: z.string().nonempty(),
   publicKey: z.string().nonempty(),
   botToken: z.string().nonempty(),
   channelId: z.string().nonempty(),
@@ -46,7 +44,6 @@ export type Config = z.infer<typeof ConfigSchema>
  */
 export const parseConfig = (env: Bindings): Config => {
   const result = ConfigSchema.safeParse({
-    applicationId: env.DISCORD_APPLICATION_ID,
     publicKey: env.DISCORD_PUBLIC_KEY,
     botToken: env.DISCORD_BOT_TOKEN,
     channelId: env.DISCORD_CHANNEL_ID,
