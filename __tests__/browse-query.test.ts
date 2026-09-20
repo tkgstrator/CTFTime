@@ -147,3 +147,22 @@ describe('賞金の絞り込み', () => {
     expect(plan.where.split('?').length - 1).toBe(plan.params.length)
   })
 })
+
+describe('検索', () => {
+  test('タイトルだけを対象にする', () => {
+    // 説明文まで含めると diversity のような語に当たって目的の大会が埋もれる。
+    const plan = buildEventQuery({ ...EVENT_QUERY_DEFAULTS, range: 'all', q: 'DIVER' }, NOW)
+    expect(plan.where).toContain('title LIKE')
+    expect(plan.where).not.toContain('description LIKE')
+  })
+
+  test('番号付きパラメータを使わず、プレースホルダとバインド数が一致する', () => {
+    // ?1 のような番号付きは文全体での位置を指すので、断片の連結とは噛み合わない。
+    const plan = buildEventQuery(
+      { ...EVENT_QUERY_DEFAULTS, range: 'upcoming', q: 'OSINT', prize: 'yes' },
+      NOW,
+    )
+    expect(plan.where).not.toMatch(/\?\d/)
+    expect(plan.where.split('?').length - 1).toBe(plan.params.length)
+  })
+})

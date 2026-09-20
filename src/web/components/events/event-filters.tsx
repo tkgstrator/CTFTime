@@ -93,9 +93,17 @@ export const EventFilters = ({ query, facets, onChange, className }: EventFilter
     setSearchDraft(query.q)
   }, [query.q])
 
+  /**
+   * 検索したら期間の絞り込みは外す。
+   *
+   * 既定は「これから」なので、そのままだと終わった大会を名前で探しても 0 件になる。
+   * アーカイブに 2900 件あるのに見つからないほうが驚きが大きいので、
+   * 名前で探す操作は全期間を対象にする。期間で絞りたければタブで戻せる。
+   */
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    onChange({ q: searchDraft.trim() })
+    const q = searchDraft.trim()
+    onChange(q.length > 0 ? { q, range: 'all' } : { q })
   }
 
   return (

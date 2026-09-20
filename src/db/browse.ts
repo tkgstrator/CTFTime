@@ -41,6 +41,13 @@ const rangeFragment = (range: EventQuery['range'], nowIso: string): Fragment | n
   return null
 }
 
+/**
+ * タイトルだけを見る。
+ *
+ * 説明文まで対象にすると「DIVER」が description の diversity に当たって 28 件返り、
+ * 目的の DIVER OSINT CTF が埋もれた。全文検索には順位付けが要るが、
+ * 名前で目当ての大会を引く用途にはタイトル一致で足りる。
+ */
 const searchFragment = (q: string): Fragment | null => {
   if (q.length === 0) return null
   return {
