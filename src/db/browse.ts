@@ -9,7 +9,12 @@
 
 import type { Dayjs } from 'dayjs'
 import { z } from 'zod'
-import type { EventDetail, EventQuery, EventSummary } from '@/shared/api'
+import {
+  EMPTY_PRIZE_VALUES,
+  type EventDetail,
+  type EventQuery,
+  type EventSummary,
+} from '@/shared/api'
 import type { StoredEvent } from './model'
 import { EventRowSchema } from './repository'
 
@@ -59,6 +64,22 @@ const onsiteFragment = (onsite: EventQuery['onsite']): Fragment | null => {
   return null
 }
 
+/**
+ * 賞金の有無。中身は自由記述なので「空でない」だけでは絞り込みにならない。
+ * TBD のような未定を表すだけの値は記載なし側に寄せる（EMPTY_PRIZE_VALUES）。
+ *
+ * SQLite の LIKE と違い IN は大小文字を区別するので、UPPER で畳んでから比較する。
+ */
+const prizeFragment = (prize: EventQuery['prize']): Fragment | null => {
+  if (prize === 'any') return null
+  const placeholders = EMPTY_PRIZE_VALUES.map(() => '?').join(', ')
+  const isEmpty = `(TRIM(prizes) = '' OR UPPER(TRIM(prizes)) IN (${placeholders}))`
+  return {
+    clause: prize === 'yes' ? `NOT ${isEmpty}` : isEmpty,
+    params: [...EMPTY_PRIZE_VALUES],
+  }
+}
+
 /** カレンダー表示範囲。[from, to] と重なるイベントを拾う（開始・終了の一方だけ範囲外でもよい）。 */
 const fromFragment = (from: string): Fragment | null =>
   from.length === 0 ? null : { clause: 'finish_at >= ?', params: [from] }
@@ -96,6 +117,7 @@ export const buildEventQuery = (query: EventQuery, now: Dayjs): EventQueryPlan =
     equalsFragment('restrictions', query.restrictions),
     aiFragment(query.ai),
     onsiteFragment(query.onsite),
+    prizeFragment(query.prize),
     fromFragment(query.from),
     toFragment(query.to),
   ].filter((fragment): fragment is Fragment => fragment !== null)

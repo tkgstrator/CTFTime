@@ -1,6 +1,12 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { AI_POLICY_DETAIL } from '@/ctftime/ai-policy'
-import { AI_FILTERS, EVENT_SORTS, type EventQuery, ONSITE_FILTERS } from '@/shared/api'
+import {
+  AI_FILTERS,
+  EVENT_SORTS,
+  type EventQuery,
+  ONSITE_FILTERS,
+  PRIZE_FILTERS,
+} from '@/shared/api'
 import { Button } from '@/web/components/ui/button'
 import { Input } from '@/web/components/ui/input'
 import {
@@ -40,6 +46,16 @@ const ONSITE_LABELS: Record<(typeof ONSITE_FILTERS)[number], string> = {
   onsite: '現地開催',
 }
 
+/**
+ * prizes は自由記述で、「TBD」だけ書かれた未定のイベントが実データの 3 割ほどある。
+ * それらは「あり」に数えても役に立たないので、ラベルの側で未定を含むことを明示する。
+ */
+const PRIZE_LABELS: Record<(typeof PRIZE_FILTERS)[number], string> = {
+  any: 'すべて',
+  yes: '記載あり',
+  no: 'なし・未定',
+}
+
 const AI_LABELS: Record<(typeof AI_FILTERS)[number], string> = {
   any: 'すべて',
   allowed: AI_POLICY_DETAIL.allowed.label,
@@ -53,6 +69,9 @@ const isAiFilter = (value: string): value is (typeof AI_FILTERS)[number] =>
 
 const isOnsiteFilter = (value: string): value is (typeof ONSITE_FILTERS)[number] =>
   ONSITE_FILTERS.some((filter) => filter === value)
+
+const isPrizeFilter = (value: string): value is (typeof PRIZE_FILTERS)[number] =>
+  PRIZE_FILTERS.some((filter) => filter === value)
 
 const isEventSort = (value: string): value is EventQuery['sort'] =>
   EVENT_SORTS.some((sort) => sort === value)
@@ -182,6 +201,29 @@ export const EventFilters = ({ query, facets, onChange, className }: EventFilter
               {ONSITE_FILTERS.map((filter) => (
                 <SelectItem key={filter} value={filter}>
                   {ONSITE_LABELS[filter]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-muted-foreground" htmlFor="filter-prize">
+            賞金
+          </label>
+          <Select
+            value={query.prize}
+            onValueChange={(value) => {
+              if (isPrizeFilter(value)) onChange({ prize: value })
+            }}
+          >
+            <SelectTrigger id="filter-prize" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PRIZE_FILTERS.map((filter) => (
+                <SelectItem key={filter} value={filter}>
+                  {PRIZE_LABELS[filter]}
                 </SelectItem>
               ))}
             </SelectContent>

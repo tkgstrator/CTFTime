@@ -35,6 +35,15 @@ export const EVENT_SORTS = [
   'title',
 ] as const
 export const ONSITE_FILTERS = ['any', 'online', 'onsite'] as const
+export const PRIZE_FILTERS = ['any', 'yes', 'no'] as const
+
+/**
+ * 賞金の記載が実質的に空とみなす値。CTFTime の prizes は自由記述で、
+ * 「TBD」だけ書いて未定を表すイベントが実データの 3 割ほどある（TDB という
+ * タイポも実在する）。これらを「賞金あり」に数えると絞り込みの役に立たないので、
+ * 記載なしと同じ側に寄せる。SQLite の比較用に大文字で持つ。
+ */
+export const EMPTY_PRIZE_VALUES = ['TBD', 'TDB', 'TBA', 'N/A', 'NA', 'NONE', '-', '--'] as const
 export const AI_FILTERS = ['any', ...AI_POLICY_VALUES] as const
 
 export const MAX_PER_PAGE = 50
@@ -53,6 +62,7 @@ export const EventQuerySchema = z.object({
   restrictions: text.max(100).default('').catch(''),
   ai: z.enum(AI_FILTERS).catch('any'),
   onsite: z.enum(ONSITE_FILTERS).catch('any'),
+  prize: z.enum(PRIZE_FILTERS).catch('any'),
   sort: z.enum(EVENT_SORTS).catch('start'),
   page: z.coerce.number().int().min(1).catch(1),
   perPage: z.coerce.number().int().min(1).max(MAX_PER_PAGE).catch(20),
@@ -71,6 +81,7 @@ export const EVENT_QUERY_DEFAULTS: EventQuery = {
   restrictions: '',
   ai: 'any',
   onsite: 'any',
+  prize: 'any',
   sort: 'start',
   page: 1,
   perPage: 20,

@@ -120,3 +120,30 @@ describe('buildEventQuery', () => {
     expect(plan.where.includes('AND')).toBe(false)
   })
 })
+
+describe('賞金の絞り込み', () => {
+  test('any のときは条件を足さない', () => {
+    const plan = buildEventQuery({ ...EVENT_QUERY_DEFAULTS, range: 'all', prize: 'any' }, NOW)
+    expect(plan.where).not.toContain('prizes')
+  })
+
+  test('yes は空文字と TBD 相当を除外する', () => {
+    const plan = buildEventQuery({ ...EVENT_QUERY_DEFAULTS, range: 'all', prize: 'yes' }, NOW)
+    expect(plan.where).toContain('NOT')
+    expect(plan.where).toContain("TRIM(prizes) = ''")
+    expect(plan.params).toContain('TBD')
+    // TDB は実データにあったタイポ。拾い漏らさないこと。
+    expect(plan.params).toContain('TDB')
+  })
+
+  test('no は空文字と TBD 相当だけを拾う', () => {
+    const plan = buildEventQuery({ ...EVENT_QUERY_DEFAULTS, range: 'all', prize: 'no' }, NOW)
+    expect(plan.where).not.toContain('NOT')
+    expect(plan.where).toContain("TRIM(prizes) = ''")
+  })
+
+  test('プレースホルダの数とバインド値の数が一致する', () => {
+    const plan = buildEventQuery({ ...EVENT_QUERY_DEFAULTS, range: 'all', prize: 'yes' }, NOW)
+    expect(plan.where.split('?').length - 1).toBe(plan.params.length)
+  })
+})

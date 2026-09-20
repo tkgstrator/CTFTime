@@ -32,20 +32,14 @@ export class ApiError extends Error {
   }
 }
 
-/** クエリを URL に載せる既定値だけの並び。EVENT_QUERY_DEFAULTS のキーを手で複製しない。 */
-const EVENT_QUERY_KEYS = [
-  'range',
-  'q',
-  'format',
-  'restrictions',
-  'ai',
-  'onsite',
-  'sort',
-  'page',
-  'perPage',
-  'from',
-  'to',
-] satisfies (keyof EventQuery)[]
+/**
+ * URL に載せるキーは EVENT_QUERY_DEFAULTS から導出する。
+ * 手で並べると、絞り込みを増やしたときにここへの追加を忘れて
+ * 「UI では選べるのにサーバーに届かない」状態になる（実際に一度やった）。
+ */
+const EVENT_QUERY_KEYS = Object.keys(EVENT_QUERY_DEFAULTS).filter(
+  (key): key is keyof EventQuery => key in EVENT_QUERY_DEFAULTS,
+)
 
 /** 既定値と同じ値は URL に載せない。フィルタ変更後の戻る/進むや共有 URL を短く保つため。 */
 const buildEventSearchParams = (query: EventQuery): URLSearchParams => {
