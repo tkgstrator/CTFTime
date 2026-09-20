@@ -104,10 +104,19 @@ export const detectAiPolicy = (...texts: string[]): AiPolicyResult => {
   return { policy: reducePolicy(found), snippets }
 }
 
-/** Discord 表示用のラベル。 */
-export const describeAiPolicy = (policy: AiPolicy): string => {
-  if (policy === 'allowed') return '🟢 利用可の記述あり'
-  if (policy === 'banned') return '🔴 禁止の記述あり'
-  if (policy === 'mentioned') return '🟡 言及あり（可否は要確認）'
-  return '⚪ 記載なし'
+/**
+ * 4 つの判定の見せ方。Discord は絵文字付きの 1 行、Web は色分けしたバッジと、
+ * 同じ判定を別の形で出すので、文言と配色の対応をここ 1 箇所に持つ。
+ */
+export const AI_POLICY_DETAIL: Record<
+  AiPolicy,
+  { label: string; tone: 'positive' | 'negative' | 'caution' | 'neutral' }
+> = {
+  allowed: { label: '利用可の記述あり', tone: 'positive' },
+  banned: { label: '禁止の記述あり', tone: 'negative' },
+  mentioned: { label: '言及あり（可否は要確認）', tone: 'caution' },
+  unknown: { label: '記載なし', tone: 'neutral' },
 }
+
+/** Discord 表示用のラベル。 */
+export const describeAiPolicy = (policy: AiPolicy): string => AI_POLICY_DETAIL[policy].label

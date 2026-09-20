@@ -20,7 +20,7 @@ const jsonStringArray = z.string().transform((raw) => {
   return parsed.success ? parsed.data : []
 })
 
-const EventRowSchema = z
+export const EventRowSchema = z
   .object({
     id: z.number().int(),
     ctf_id: z.number().int(),
@@ -72,7 +72,12 @@ const EventRowSchema = z
 
 const EventRowListSchema = z.array(EventRowSchema)
 
-const toEvents = (results: unknown): StoredEvent[] => {
+/**
+ * ボット用の厳格なパーサ。1 行でも壊れていれば例外にする。
+ * 公開サイト側は 1 件の不正行で一覧全体を落としたくないので、
+ * src/db/browse.ts に行単位で読み飛ばす版を別に置いている。
+ */
+export const toEvents = (results: unknown): StoredEvent[] => {
   const parsed = EventRowListSchema.safeParse(results)
   if (!parsed.success) {
     throw new Error(`events テーブルの行を読めませんでした: ${parsed.error.issues[0]?.message}`)
@@ -351,6 +356,9 @@ export const listParticipants = async (db: D1Database, eventId: number): Promise
 /**
  * イベントごとの参加人数をまとめて数える。
  * 一覧画面でイベントの数だけクエリを投げずに済ませるため。
+ *
+ * 返すのは Map なので、API のレスポンスにそのまま載せてはいけない。
+ * JSON.stringify(map) は {} になる。呼び出し側で配列か素のオブジェクトに変換すること。
  */
 export const countParticipantsByEvent = async (
   db: D1Database,
@@ -408,12 +416,4 @@ export const listUpcomingEvents = async (
     .bind(now.toISOString(), now.add(days, 'day').toISOString(), limit)
     .all()
   return toEvents(results)
-}
-
-/** 終了から 30 日経ったイベントを捨てる。参加表明と通知履歴も連鎖して消える。 */
-export const purgeStaleEvents = async (db: D1Database, now: Dayjs): Promise<void> => {
-  await db
-    .prepare('DELETE FROM events WHERE finish_at < ?')
-    .bind(now.subtract(30, 'day').toISOString())
-    .run()
 }

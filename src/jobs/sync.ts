@@ -7,7 +7,6 @@ import {
   claimNotification,
   countEvents,
   listExistingEventIds,
-  purgeStaleEvents,
   releaseNotification,
   setAnnounceMessageId,
   upsertEvents,
@@ -62,7 +61,7 @@ export const syncEvents = async (env: Bindings, config: Config): Promise<SyncRes
       await claimNotification(env.DB, event.id, 'new', now)
     }
     await postMessage(config.botToken, config.channelId, {
-      content: `🌱 CTFTime の初期同期が完了しました（${newcomers.length} 件）。これ以降に新しく登録されたイベントを告知します。`,
+      content: `CTFTime の初期同期が完了しました（${newcomers.length} 件）。これ以降に新しく登録されたイベントを告知します。`,
     })
     return { fetched: stored.length, announced: 0, seeded: true }
   }
@@ -88,6 +87,5 @@ export const syncEvents = async (env: Bindings, config: Config): Promise<SyncRes
     }
   }, Promise.resolve(0))
 
-  await purgeStaleEvents(env.DB, now)
   return { fetched: stored.length, announced, seeded: false }
 }

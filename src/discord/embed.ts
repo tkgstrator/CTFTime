@@ -13,10 +13,10 @@ const COLOR = {
 } as const
 
 const STAGE_HEADLINE: Record<ReminderStage, string> = {
-  reminder_24h: '⏰ **明日開催**',
-  reminder_1h: '🚨 **まもなく開始（1時間以内）**',
-  start: '🟢 **開始しました**',
-  end: '🏁 **終了しました**',
+  reminder_24h: '**明日開催**',
+  reminder_1h: '**まもなく開始（1時間以内）**',
+  start: '**開始しました**',
+  end: '**終了しました**',
 }
 
 const truncate = (text: string, max: number): string =>
@@ -113,7 +113,7 @@ export const buildEventEmbed = (event: StoredEvent, options: EmbedOptions) => {
         value: `${event.weight.toFixed(2)} / ${event.participants} チーム`,
         inline: true,
       },
-      { name: '🤖 AI 利用', value: formatAiPolicy(event), inline: false },
+      { name: 'AI 利用', value: formatAiPolicy(event), inline: false },
       {
         name: '公式サイト',
         value: event.url.length > 0 ? event.url : '（未登録）',
@@ -152,6 +152,6 @@ export const buildReminderPayload = (
 export const formatEventLine = (event: StoredEvent, participantCount?: number): string => {
   const ai = describeAiPolicy(event.aiPolicy)
   const count = participantCount === undefined ? 0 : participantCount
-  const joined = count > 0 ? `・👥 ${count} 人` : ''
+  const joined = count > 0 ? `・参加 ${count} 人` : ''
   return `**[${truncate(event.title, 60)}](${event.ctftimeUrl})**\n${timestamp(event.startAt, 'f')}（${timestamp(event.startAt, 'R')}）・${event.format}・${ai}${joined}\n\`/ctf info ${event.id}\``
 }

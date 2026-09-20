@@ -181,7 +181,7 @@ const handleCommand = async (interaction: Interaction, db: D1Database) => {
     const days = requestedDays === null ? 14 : requestedDays
     const events = await listUpcomingEvents(db, now, days, LIST_LIMIT)
     return buildListResponse(
-      `📅 今後 ${days} 日間の CTF`,
+      `今後 ${days} 日間の CTF`,
       events,
       await countsFor(db, events),
       `今後 ${days} 日間に開催予定のイベントは見つかりませんでした。`,
@@ -191,7 +191,7 @@ const handleCommand = async (interaction: Interaction, db: D1Database) => {
   if (sub.name === 'joined') {
     const events = await listJoinedEvents(db, user.id, now)
     return buildListResponse(
-      '✅ 参加表明したイベント',
+      '参加表明したイベント',
       events,
       await countsFor(db, events),
       '参加表明したイベントはまだありません。告知の「参加する」を押すと登録されます。',

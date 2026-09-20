@@ -1,0 +1,40 @@
+import dayjs from 'dayjs'
+import { Hono } from 'hono'
+import type { Bindings } from '@/config'
+import { getSummary, toEventSummary } from '@/db/browse'
+import type { StoredEvent } from '@/db/model'
+import { countParticipantsByEvent } from '@/db/repository'
+import type { EventSummary, SummaryResponse } from '@/shared/api'
+
+export const summaryRoute = new Hono<{ Bindings: Bindings }>()
+
+/**
+ * 疎通確認用。`/` 以下は静的アセット（SPA）が返すので、Worker が生きているかは
+ * こちらで見る。挙動は移設前と同じ。
+ */
+summaryRoute.get('/health', (c) => c.json({ ok: true }))
+
+const resolveNext = async (
+  db: D1Database,
+  event: StoredEvent | null,
+): Promise<EventSummary | null> => {
+  if (event === null) return null
+  const counts = await countParticipantsByEvent(db, [event.id])
+  const count = counts.get(event.id)
+  return toEventSummary(event, count === undefined ? 0 : count)
+}
+
+summaryRoute.get('/summary', async (c) => {
+  const now = dayjs()
+  const summary = await getSummary(c.env.DB, now)
+  const next = await resolveNext(c.env.DB, summary.next)
+
+  const body: SummaryResponse = {
+    totals: summary.totals,
+    lastSyncedAt: summary.lastSyncedAt,
+    facets: summary.facets,
+    next,
+  }
+  c.header('Cache-Control', 'public, max-age=60')
+  return c.json(body)
+})

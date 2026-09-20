@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { api } from './api'
 import { type Bindings, parseConfig } from './config'
 import { handleInteraction } from './discord/interactions'
 import { verifyDiscordRequest } from './discord/verify'
@@ -7,11 +8,7 @@ import { syncEvents } from './jobs/sync'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-/**
- * 疎通確認用。`/` 以下は静的アセット（SPA）が返すので、
- * Worker が生きているかはこちらで見る。
- */
-app.get('/api/health', (c) => c.json({ ok: true }))
+app.route('/api', api)
 
 /**
  * Discord の Interactions Endpoint URL に設定する先。
@@ -33,6 +30,14 @@ app.post('/interactions', async (c) => {
   const parsedBody = JSON.parse(body)
   return c.json(await handleInteraction(parsedBody, c.env.DB))
 })
+
+/**
+ * /api（JSON 404 は api.notFound が返す）と /interactions 以外は SPA の領分。
+ * run_worker_first で Worker を通ったものの、Hono のどのルートにも一致しない
+ * パスはここで静的アセットへフォールバックする（SPA のクライアントサイド
+ * ルーティングと、生成された routeTree.gen.ts の対象パスを両方生かすため）。
+ */
+app.notFound((c) => c.env.ASSETS.fetch(c.req.raw))
 
 export default {
   fetch: app.fetch,
