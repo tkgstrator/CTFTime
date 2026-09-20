@@ -20,7 +20,7 @@ const jsonStringArray = z.string().transform((raw) => {
   return parsed.success ? parsed.data : []
 })
 
-const EventRowSchema = z
+export const EventRowSchema = z
   .object({
     id: z.number().int(),
     ctf_id: z.number().int(),
@@ -39,6 +39,8 @@ const EventRowSchema = z
     duration_days: z.number().int(),
     duration_hours: z.number().int(),
     description: storedText,
+    // 0003 より前の行は空文字。次の同期で埋まる。
+    prizes: storedText.default(''),
     organizers: jsonStringArray,
     ai_policy: z.enum(AI_POLICY_VALUES).catch('unknown'),
     ai_snippets: jsonStringArray,
@@ -63,6 +65,7 @@ const EventRowSchema = z
       durationDays: row.duration_days,
       durationHours: row.duration_hours,
       description: row.description,
+      prizes: row.prizes,
       organizers: row.organizers,
       aiPolicy: row.ai_policy,
       aiSnippets: row.ai_snippets,
@@ -72,7 +75,12 @@ const EventRowSchema = z
 
 const EventRowListSchema = z.array(EventRowSchema)
 
-const toEvents = (results: unknown): StoredEvent[] => {
+/**
+ * ボット用の厳格なパーサ。1 行でも壊れていれば例外にする。
+ * 公開サイト側は 1 件の不正行で一覧全体を落としたくないので、
+ * src/db/browse.ts に行単位で読み飛ばす版を別に置いている。
+ */
+export const toEvents = (results: unknown): StoredEvent[] => {
   const parsed = EventRowListSchema.safeParse(results)
   if (!parsed.success) {
     throw new Error(`events テーブルの行を読めませんでした: ${parsed.error.issues[0]?.message}`)
@@ -84,8 +92,8 @@ const UPSERT_EVENT_SQL = `
 INSERT INTO events (
   id, ctf_id, title, url, ctftime_url, logo, format, restrictions, onsite, location,
   weight, participants, start_at, finish_at, duration_days, duration_hours,
-  description, organizers, ai_policy, ai_snippets, created_at, updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  description, prizes, organizers, ai_policy, ai_snippets, created_at, updated_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(id) DO UPDATE SET
   title = excluded.title,
   url = excluded.url,
@@ -102,6 +110,7 @@ ON CONFLICT(id) DO UPDATE SET
   duration_days = excluded.duration_days,
   duration_hours = excluded.duration_hours,
   description = excluded.description,
+  prizes = excluded.prizes,
   organizers = excluded.organizers,
   ai_policy = excluded.ai_policy,
   ai_snippets = excluded.ai_snippets,
@@ -156,6 +165,7 @@ export const upsertEvents = async (
         event.durationDays,
         event.durationHours,
         event.description,
+        event.prizes,
         JSON.stringify(event.organizers),
         event.aiPolicy,
         JSON.stringify(event.aiSnippets),
@@ -351,6 +361,9 @@ export const listParticipants = async (db: D1Database, eventId: number): Promise
 /**
  * イベントごとの参加人数をまとめて数える。
  * 一覧画面でイベントの数だけクエリを投げずに済ませるため。
+ *
+ * 返すのは Map なので、API のレスポンスにそのまま載せてはいけない。
+ * JSON.stringify(map) は {} になる。呼び出し側で配列か素のオブジェクトに変換すること。
  */
 export const countParticipantsByEvent = async (
   db: D1Database,
@@ -408,12 +421,4 @@ export const listUpcomingEvents = async (
     .bind(now.toISOString(), now.add(days, 'day').toISOString(), limit)
     .all()
   return toEvents(results)
-}
-
-/** 終了から 30 日経ったイベントを捨てる。参加表明と通知履歴も連鎖して消える。 */
-export const purgeStaleEvents = async (db: D1Database, now: Dayjs): Promise<void> => {
-  await db
-    .prepare('DELETE FROM events WHERE finish_at < ?')
-    .bind(now.subtract(30, 'day').toISOString())
-    .run()
 }

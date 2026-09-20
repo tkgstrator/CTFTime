@@ -23,7 +23,7 @@ Embed に出る項目は次のとおり。
 | 形式 | Jeopardy / Attack-Defense など |
 | 参加条件 | Open / Academic など。オンサイトなら開催地も |
 | Weight / 登録数 | CTFTime の weight と、登録チーム数 |
-| 🤖 AI 利用 | 推定した可否と、根拠になった原文の抜粋（→ [AI 利用可否について](#ai-利用可否について)） |
+| AI 利用 | 推定した可否と、根拠になった原文の抜粋（→ [AI 利用可否について](#ai-利用可否について)） |
 | 公式サイト | イベントの URL |
 | 参加表明 | いま参加表明している人のメンション一覧 |
 
@@ -52,7 +52,7 @@ Embed に出る項目は次のとおり。
 - 送信に失敗したら記録を取り消すので、次の cron で再試行される
 - 発火の窓を cron 間隔より広く取ってあり、実行が 1 回飛んでも通知は出る
 - 初回起動時は告知せず、既存イベントを取り込むだけ（数十件が一斉に流れるのを防ぐ）
-- 終了から 30 日経ったイベントは自動で消える
+- 既に開始したイベントは告知しない（過去のデータを取り込んでも流れない）
 
 ## AI 利用可否について
 
@@ -61,10 +61,10 @@ CTFTime の API には AI 利用可否を表すフィールドが無い。
 
 | 表示 | 意味 |
 | --- | --- |
-| 🟢 利用可の記述あり | 近くに allowed / permitted などがある |
-| 🔴 禁止の記述あり | 近くに prohibited / not allowed / 禁止 などがある |
-| 🟡 言及あり（可否は要確認） | AI に触れているが可否を読み取れない |
-| ⚪ 記載なし | AI 利用方針についての記述が見つからない |
+| 利用可の記述あり | 近くに allowed / permitted などがある |
+| 禁止の記述あり | 近くに prohibited / not allowed / 禁止 などがある |
+| 言及あり（可否は要確認） | AI に触れているが可否を読み取れない |
+| 記載なし | AI 利用方針についての記述が見つからない |
 
 推定は外れる。だから判定ラベルの下には必ず**原文の抜粋を引用で添える**——読む側が原文で確かめられるなら、
 誤判定は誤解ではなく単なるノイズで済む。最終的な可否は必ず公式ルールで確認すること。
@@ -79,15 +79,18 @@ CTFTime の API には AI 利用可否を表すフィールドが無い。
 index.html                Web UI（SPA）のエントリ
 vite.config.ts            Worker と Web UI を同じ Vite でまとめてビルドする
 src/
-├── index.ts              Hono アプリ（/interactions, /api/health）と scheduled ハンドラ
+├── index.ts              Hono アプリ（/interactions と /api/*）と scheduled ハンドラ
 ├── config.ts             バインディングの検証
 ├── ctftime/
 │   ├── client.ts         CTFTime API の取得
 │   ├── schema.ts         レスポンスの Zod スキーマ
 │   └── ai-policy.ts      AI 利用可否の推定
+├── api/                  Web UI 向けの読み取り API（/api/events, /api/summary, iCal）
+├── shared/               Worker と Web UI が共有する zod スキーマと日時処理
 ├── db/
 │   ├── model.ts          保存形式への変換（時刻は UTC ISO8601 に正規化）
-│   └── repository.ts     D1 アクセス
+│   ├── repository.ts     D1 アクセス（ボット用・厳格）
+│   └── browse.ts         D1 アクセス（サイト用・寛容）
 ├── discord/
 │   ├── verify.ts         Ed25519 署名検証
 │   ├── rest.ts           メッセージ投稿・編集
@@ -140,7 +143,15 @@ bunx wrangler login
 - **General Information** の Application ID と Public Key を控える
 - **Bot** タブで Reset Token してトークンを控える（一度しか表示されない）
 - **OAuth2 > URL Generator** で `bot` と `applications.commands` を選び、
-  Bot Permissions に `Send Messages` と `Embed Links` を付けてサーバに招待する
+  Bot Permissions に `View Channel` `Send Messages` `Embed Links` を付けてサーバに招待する。
+  URL は直接組み立ててもよい（Application ID は招待 URL に載る公開情報）
+
+```
+https://discord.com/oauth2/authorize?client_id=<APPLICATION_ID>&scope=bot+applications.commands&permissions=19456
+```
+
+招待できても、告知先チャンネル側の権限上書きで拒否されていれば
+投稿時に `Missing Access (50001)` になる。チャンネルの権限設定も確認すること。
 
 ### 2. D1 を作る
 
@@ -164,10 +175,10 @@ bun run db:migrate        # 本番の D1 にスキーマを適用
 DISCORD_CHANNEL_ID = "123456789012345678"
 ```
 
-認証情報は secret で渡す。
+認証情報は secret で渡す。Application ID は Worker では使わない
+（コマンド登録スクリプトだけが読む）ので、ここには登録しない。
 
 ```bash
-bunx wrangler secret put DISCORD_APPLICATION_ID
 bunx wrangler secret put DISCORD_PUBLIC_KEY
 bunx wrangler secret put DISCORD_BOT_TOKEN
 ```
@@ -246,7 +257,8 @@ cron は 15 分おき。各通知は `notifications` テーブルで（イベン
 窓を cron 間隔より広く取ってあるのは、実行が 1 回飛んでも取りこぼさないため。
 送信に失敗した場合は通知済みの記録を取り消すので、次の cron で再試行される。
 
-終了から 30 日経ったイベントは同期のたびに削除される（参加表明と通知履歴も連鎖して消える）。
+取得したイベントは削除しない。同期は過去 30 日ぶんも見ているので、
+cron が止まっていた間に開始して終わった大会も次の実行で埋まる。
 
 ## ローカル開発
 

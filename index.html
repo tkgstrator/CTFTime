@@ -3,7 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ctftime-bot</title>
+    <title>CTFTime Watch</title>
+    <script>
+      // OS のダークモード設定に追従させる（切り替え UI は無い）。
+      // 描画前に class を確定させないと、初回表示でちらつく。
+      ;(() => {
+        const media = matchMedia('(prefers-color-scheme: dark)')
+        const apply = (matches) => document.documentElement.classList.toggle('dark', matches)
+        apply(media.matches)
+        media.addEventListener('change', (event) => apply(event.matches))
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

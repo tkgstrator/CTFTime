@@ -1,13 +1,12 @@
 import dayjs from 'dayjs'
 import type { Bindings, Config } from '../config'
-import { fetchUpcomingEvents } from '../ctftime/client'
+import { fetchSyncWindow } from '../ctftime/client'
 import type { StoredEvent } from '../db/model'
 import { toStoredEvent } from '../db/model'
 import {
   claimNotification,
   countEvents,
   listExistingEventIds,
-  purgeStaleEvents,
   releaseNotification,
   setAnnounceMessageId,
   upsertEvents,
@@ -22,7 +21,10 @@ export type SyncResult = {
 }
 
 /** 告知対象にするかどうか。条件は wrangler.toml の [vars] で調整する。 */
-const matchesAnnounceFilter = (event: StoredEvent, config: Config): boolean => {
+const matchesAnnounceFilter = (event: StoredEvent, config: Config, nowIso: string): boolean => {
+  // 既に始まった大会を「新着」として流しても読む側に意味がない。
+  // 過去の取り込みで大量の終了済みイベントが新規扱いになったときの歯止めでもある。
+  if (event.startAt <= nowIso) return false
   if (event.weight < config.announceMinWeight) return false
   if (event.onsite && !config.announceOnsite) return false
   if (
@@ -45,7 +47,8 @@ const matchesAnnounceFilter = (event: StoredEvent, config: Config): boolean => {
  */
 export const syncEvents = async (env: Bindings, config: Config): Promise<SyncResult> => {
   const now = dayjs()
-  const events = await fetchUpcomingEvents(config.lookaheadDays)
+  const nowIso = now.toISOString()
+  const events = await fetchSyncWindow(config.lookaheadDays)
   const stored = events.map(toStoredEvent)
 
   const knownCount = await countEvents(env.DB)
@@ -62,12 +65,12 @@ export const syncEvents = async (env: Bindings, config: Config): Promise<SyncRes
       await claimNotification(env.DB, event.id, 'new', now)
     }
     await postMessage(config.botToken, config.channelId, {
-      content: `🌱 CTFTime の初期同期が完了しました（${newcomers.length} 件）。これ以降に新しく登録されたイベントを告知します。`,
+      content: `CTFTime の初期同期が完了しました（${newcomers.length} 件）。これ以降に新しく登録されたイベントを告知します。`,
     })
     return { fetched: stored.length, announced: 0, seeded: true }
   }
 
-  const targets = newcomers.filter((event) => matchesAnnounceFilter(event, config))
+  const targets = newcomers.filter((event) => matchesAnnounceFilter(event, config, nowIso))
   const announced = await targets.reduce(async (previous, event) => {
     const count = await previous
     const claimed = await claimNotification(env.DB, event.id, 'new', now)
@@ -76,7 +79,7 @@ export const syncEvents = async (env: Bindings, config: Config): Promise<SyncRes
       const messageId = await postMessage(
         config.botToken,
         config.channelId,
-        buildAnnouncePayload(event, []),
+        buildAnnouncePayload(event, [], config.siteUrl),
       )
       await setAnnounceMessageId(env.DB, event.id, messageId)
       return count + 1
@@ -88,6 +91,5 @@ export const syncEvents = async (env: Bindings, config: Config): Promise<SyncRes
     }
   }, Promise.resolve(0))
 
-  await purgeStaleEvents(env.DB, now)
   return { fetched: stored.length, announced, seeded: false }
 }

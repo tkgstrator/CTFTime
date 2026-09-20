@@ -24,6 +24,8 @@ export type StoredEvent = {
   durationDays: number
   durationHours: number
   description: string
+  /** 賞品・賞金の記載。自由記述で、「TBD」だけのことも空のこともある。 */
+  prizes: string
   organizers: string[]
   aiPolicy: AiPolicy
   aiSnippets: string[]
@@ -67,6 +69,7 @@ export const toStoredEvent = (event: CtftimeEvent): StoredEvent => {
     durationDays: event.duration.days,
     durationHours: event.duration.hours,
     description: event.description,
+    prizes: event.prizes,
     organizers: event.organizers.map((organizer) => organizer.name),
     aiPolicy: ai.policy,
     aiSnippets: ai.snippets,

@@ -91,9 +91,9 @@ const numberOption = (options: SubOption[], name: string): number | null => {
 
 type SubOption = z.infer<typeof SubOptionSchema>
 
-const buildEventDetail = (event: StoredEvent, participantIds: string[]) => ({
+const buildEventDetail = (event: StoredEvent, participantIds: string[], siteUrl: string) => ({
   embeds: [buildEventEmbed(event, { stage: 'new', participantIds, withDescription: true })],
-  components: buildJoinComponents(event),
+  components: buildJoinComponents(event, siteUrl),
 })
 
 const buildListResponse = (
@@ -101,6 +101,7 @@ const buildListResponse = (
   events: StoredEvent[],
   counts: Map<number, number>,
   emptyHint: string,
+  siteUrl: string,
 ) => {
   if (events.length === 0) return ephemeralText(emptyHint)
   return {
@@ -111,7 +112,7 @@ const buildListResponse = (
           title,
           color: 0x5865f2,
           description: events
-            .map((event) => formatEventLine(event, counts.get(event.id)))
+            .map((event) => formatEventLine(event, siteUrl, counts.get(event.id)))
             .join('\n\n'),
         },
       ],
@@ -128,7 +129,7 @@ const countsFor = (db: D1Database, events: StoredEvent[]): Promise<Map<number, n
   )
 
 /** ボタン（参加する / 参加を取り消す）の処理。 */
-const handleComponent = async (interaction: Interaction, db: D1Database) => {
+const handleComponent = async (interaction: Interaction, db: D1Database, siteUrl: string) => {
   const customId = interaction.data?.custom_id
   const user = resolveUser(interaction)
   if (customId === undefined || user === null) {
@@ -158,12 +159,12 @@ const handleComponent = async (interaction: Interaction, db: D1Database) => {
   const participantIds = await listParticipantIds(db, eventId)
   return {
     type: ResponseType.UPDATE_MESSAGE,
-    data: buildEventDetail(event, participantIds),
+    data: buildEventDetail(event, participantIds, siteUrl),
   }
 }
 
 /** /ctf のサブコマンド処理。 */
-const handleCommand = async (interaction: Interaction, db: D1Database) => {
+const handleCommand = async (interaction: Interaction, db: D1Database, siteUrl: string) => {
   const user = resolveUser(interaction)
   if (interaction.data?.name !== 'ctf' || user === null) {
     return ephemeralText('未知のコマンドです。')
@@ -181,20 +182,22 @@ const handleCommand = async (interaction: Interaction, db: D1Database) => {
     const days = requestedDays === null ? 14 : requestedDays
     const events = await listUpcomingEvents(db, now, days, LIST_LIMIT)
     return buildListResponse(
-      `📅 今後 ${days} 日間の CTF`,
+      `今後 ${days} 日間の CTF`,
       events,
       await countsFor(db, events),
       `今後 ${days} 日間に開催予定のイベントは見つかりませんでした。`,
+      siteUrl,
     )
   }
 
   if (sub.name === 'joined') {
     const events = await listJoinedEvents(db, user.id, now)
     return buildListResponse(
-      '✅ 参加表明したイベント',
+      '参加表明したイベント',
       events,
       await countsFor(db, events),
       '参加表明したイベントはまだありません。告知の「参加する」を押すと登録されます。',
+      siteUrl,
     )
   }
 
@@ -210,7 +213,7 @@ const handleCommand = async (interaction: Interaction, db: D1Database) => {
     const participantIds = await listParticipantIds(db, eventId)
     return {
       type: ResponseType.MESSAGE,
-      data: { ...buildEventDetail(event, participantIds), flags: EPHEMERAL },
+      data: { ...buildEventDetail(event, participantIds, siteUrl), flags: EPHEMERAL },
     }
   }
 
@@ -218,7 +221,7 @@ const handleCommand = async (interaction: Interaction, db: D1Database) => {
 }
 
 /** 署名検証済みのインタラクションを処理して、返す JSON を組み立てる。 */
-export const handleInteraction = async (payload: unknown, db: D1Database) => {
+export const handleInteraction = async (payload: unknown, db: D1Database, siteUrl: string) => {
   const parsed = InteractionSchema.safeParse(payload)
   if (!parsed.success) {
     return ephemeralText('インタラクションの形式を解釈できませんでした。')
@@ -229,10 +232,10 @@ export const handleInteraction = async (payload: unknown, db: D1Database) => {
     return { type: ResponseType.PONG }
   }
   if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
-    return handleComponent(interaction, db)
+    return handleComponent(interaction, db, siteUrl)
   }
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-    return handleCommand(interaction, db)
+    return handleCommand(interaction, db, siteUrl)
   }
   return ephemeralText('未対応のインタラクションです。')
 }

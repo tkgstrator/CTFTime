@@ -22,6 +22,8 @@ ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
+# Web UI の公開先。Discord の埋め込みから詳細ページへ張るのに使う。
+SITE_URL = "http://localhost:13575"
 
 # SPA（src/web）を同じ Worker から配信する。
 # directory は `vite build` が生成する設定に自動で入るのでここには書かない。
@@ -67,6 +69,7 @@ ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
+SITE_URL = "https://ctftime-bot-staging.lemonandchan.workers.dev"
 
 [env.staging.assets]
 binding = "ASSETS"
@@ -100,6 +103,7 @@ ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
+SITE_URL = "https://ctf.qleap.jp"
 
 [env.production.assets]
 binding = "ASSETS"

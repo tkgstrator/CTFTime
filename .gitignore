@@ -23,7 +23,7 @@
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -233,3 +233,7 @@ worker-configuration.d.ts
 # === Act (GitHub Actions local runner) ===
 .secrets
 !.secrets.example
+
+# === Playwright ===
+# Snapshots and console logs the MCP server writes while driving the browser.
+screenshots/

@@ -33,7 +33,8 @@
       "!**/dist",
       "!**/.wrangler",
       "!**/worker-configuration.d.ts",
-      "!**/*.gen.ts"
+      "!**/*.gen.ts",
+      "!**/src/web/components/ui"
     ]
   },
   "formatter": {
