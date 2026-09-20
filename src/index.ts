@@ -7,7 +7,11 @@ import { syncEvents } from './jobs/sync'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-app.get('/', (c) => c.text('ctftime-bot'))
+/**
+ * 疎通確認用。`/` 以下は静的アセット（SPA）が返すので、
+ * Worker が生きているかはこちらで見る。
+ */
+app.get('/api/health', (c) => c.json({ ok: true }))
 
 /**
  * Discord の Interactions Endpoint URL に設定する先。

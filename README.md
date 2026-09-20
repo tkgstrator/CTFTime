@@ -76,8 +76,10 @@ CTFTime の API には AI 利用可否を表すフィールドが無い。
 ## 構成
 
 ```
+index.html                Web UI（SPA）のエントリ
+vite.config.ts            Worker と Web UI を同じ Vite でまとめてビルドする
 src/
-├── index.ts              Hono アプリ（/interactions）と scheduled ハンドラ
+├── index.ts              Hono アプリ（/interactions, /api/health）と scheduled ハンドラ
 ├── config.ts             バインディングの検証
 ├── ctftime/
 │   ├── client.ts         CTFTime API の取得
@@ -92,10 +94,14 @@ src/
 │   ├── embed.ts          Embed とボタンの組み立て
 │   ├── commands.ts       スラッシュコマンド定義
 │   └── interactions.ts   インタラクション処理
-└── jobs/
-    ├── sync.ts           CTFTime 同期と新規告知
-    └── remind.ts         参加表明者向けリマインダ
+├── jobs/
+│   ├── sync.ts           CTFTime 同期と新規告知
+│   └── remind.ts         参加表明者向けリマインダ
+└── web/                  Web UI（React）。Worker とは別の tsconfig で型検査する
 ```
+
+Web UI は Worker と同じデプロイに相乗りする。`/api/*` `/auth/*` `/interactions` は Worker が、
+それ以外は静的アセット（SPA）が応答する。
 
 Gateway には繋がない。Discord の **Interactions Endpoint URL**（HTTPS に署名付き POST が飛んでくる方式）
 を使うので、Workers だけで Bot が成立する。
@@ -247,10 +253,16 @@ cron は 15 分おき。各通知は `notifications` テーブルで（イベン
 ```bash
 cp .dev.vars.example .dev.vars   # 手順 3 で作っていなければここで
 bun run db:migrate:local
-bun run dev --test-scheduled
+bun run dev
 ```
 
-- `curl "http://localhost:8787/__scheduled?cron=*/15+*+*+*+*"` で cron を手動実行できる
+`bun run dev` は Vite の開発サーバで、Worker と Web UI の両方を <http://localhost:8787> で配信する
+（どちらもファイルを保存すると自動で反映される）。
+
+- `bun run dev:cron` で cron を手動実行できる。パターンを指定したいときは
+  `curl "http://localhost:8787/cdn-cgi/local/scheduled?cron=*/15+*+*+*+*"`
+  （Vite 経由では `wrangler dev --test-scheduled` の `/__scheduled` は使えない。
+  叩いても SPA の HTML が返るだけで cron は走らないので注意）
 - `/interactions` は署名検証を通るので、試すには Ed25519 で署名した POST を投げる必要がある
 - D1 の中身は `bunx wrangler d1 execute ctftime-bot --local --command "SELECT ..."` で覗ける
 

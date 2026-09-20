@@ -23,6 +23,16 @@ ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
 
+# SPA（src/web）を同じ Worker から配信する。
+# directory は `vite build` が生成する設定に自動で入るのでここには書かない。
+# run_worker_first が要るのは、compatibility_date が 2025-04-01 以降だと
+# ブラウザのページ遷移（Sec-Fetch-Mode: navigate）が Worker を通らずアセットを返すため。
+# OAuth のコールバックはまさにその遷移で来るので、/auth/* を外すとログインが成立しない。
+[assets]
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/auth/*", "/interactions"]
+
 [observability]
 enabled = true
 head_sampling_rate = 1
@@ -52,6 +62,11 @@ ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
 
+[env.staging.assets]
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/auth/*", "/interactions"]
+
 [env.staging.observability]
 enabled = true
 head_sampling_rate = 1
@@ -73,6 +88,11 @@ ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
+
+[env.production.assets]
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/auth/*", "/interactions"]
 
 [env.production.observability]
 enabled = true

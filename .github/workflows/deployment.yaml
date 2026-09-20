@@ -51,10 +51,18 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: d1 migrations apply ${{ env.DATABASE_NAME }} --env ${{ env.ENVIRONMENT }} --remote
 
+      # Worker と Web UI をまとめてビルドする。環境は --env ではなく
+      # CLOUDFLARE_ENV でビルド時に焼き込む（結果は dist/*/wrangler.json に出る）。
+      - name: Build
+        run: bun run build
+        env:
+          CLOUDFLARE_ENV: ${{ env.ENVIRONMENT }}
+
+      # deploy は dist の設定を自動で拾うので、--env も entry point も渡さない。
       - name: Wrangler deploy
         uses: cloudflare/wrangler-action@v3
         with:
           wranglerVersion: latest
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env ${{ env.ENVIRONMENT }} --minify src/index.ts
+          command: deploy

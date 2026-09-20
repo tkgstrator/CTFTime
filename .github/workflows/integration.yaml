@@ -91,6 +91,10 @@ jobs:
         continue-on-error: true
       - name: Type check
         run: bun run typecheck
+      # Worker と Web UI が実際に束ねられるところまで見る。
+      # 型は通るのにデプロイで初めて壊れる、という事故を防ぐため。
+      - name: Build
+        run: bun run build
 
   test:
     name: Test

@@ -1,0 +1,17 @@
+{
+  // React 側は Worker と前提が違う（DOM がある / Workers 型は無い / JSX は react）。
+  // ルートの tsconfig.json からは除外し、ここで上書きする。
+  // ファイルから見て最も近い tsconfig.json をエディタが拾うので、
+  // ルートに tsconfig.web.json を置くのではなく src/web 直下に置いている。
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    // Workers 型と bun 型を外し、代わりに Vite のもの（*.css の import など）を入れる。
+    "types": ["vite/client"],
+    "jsxImportSource": "react"
+  },
+  // extends は include / exclude も継承する。上書きしないと src/**/*.ts が
+  // 混ざり込み、types: [] のせいで D1Database が未定義になって落ちる。
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": []
+}
