@@ -1,7 +1,7 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { Bindings, Config } from '../config'
-import { fetchEventsBetween, fetchUpcomingEvents } from '../ctftime/client'
+import { fetchEventsBetween, fetchSyncWindow } from '../ctftime/client'
 import type { StoredEvent } from '../db/model'
 import { toStoredEvent } from '../db/model'
 import {
@@ -76,7 +76,7 @@ const backfillPastEvents = async (env: Bindings, config: Config, now: Dayjs): Pr
 export const syncEvents = async (env: Bindings, config: Config): Promise<SyncResult> => {
   const now = dayjs()
   const nowIso = now.toISOString()
-  const events = await fetchUpcomingEvents(config.lookaheadDays)
+  const events = await fetchSyncWindow(config.lookaheadDays)
   const stored = events.map(toStoredEvent)
 
   const knownCount = await countEvents(env.DB)

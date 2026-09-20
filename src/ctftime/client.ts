@@ -40,11 +40,27 @@ export const fetchEventsBetween = async (from: Dayjs, to: Dayjs): Promise<Ctftim
       .join(' / ')
     throw new Error(`CTFTime API のレスポンス形式が想定と異なります — ${detail}`)
   }
+  // 上限ちょうどで返ってきたということは、その先が切り捨てられている可能性が高い。
+  // 黙って取りこぼすのが一番困るので、気付けるように残す。
+  if (result.data.length >= FETCH_LIMIT) {
+    console.warn(
+      `CTFTime から上限の ${FETCH_LIMIT} 件が返りました。範囲内のイベントを取りこぼしている可能性があります`,
+    )
+  }
   return result.data
 }
 
-/** 今から lookaheadDays 日後までに開始するイベント。 */
-export const fetchUpcomingEvents = async (lookaheadDays: number): Promise<CtftimeEvent[]> => {
+/**
+ * 通常同期で見る範囲。過去側にも少し広げてあるのは取りこぼしを拾い直すため。
+ *
+ * 一括取り込みは一度しか走らないので、それだけに頼るとボットが止まっている間に
+ * 開始して終わった大会が永久に入らない。毎回この幅を見ておけば、
+ * 停止が この日数以内 なら次の同期で自動的に埋まる。
+ */
+const RESYNC_PAST_DAYS = 30
+
+/** 過去 RESYNC_PAST_DAYS 日から lookaheadDays 日後までに開始するイベント。 */
+export const fetchSyncWindow = async (lookaheadDays: number): Promise<CtftimeEvent[]> => {
   const now = dayjs()
-  return fetchEventsBetween(now, now.add(lookaheadDays, 'day'))
+  return fetchEventsBetween(now.subtract(RESYNC_PAST_DAYS, 'day'), now.add(lookaheadDays, 'day'))
 }
