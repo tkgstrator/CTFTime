@@ -26,11 +26,10 @@ const truncate = (text: string, max: number): string =>
 const timestamp = (iso: string, style: 'F' | 'R' | 'f'): string =>
   `<t:${dayjs(iso).unix()}:${style}>`
 
+/** 日と時間に分けず通しの時間数で出す。CTF は「48 時間」のように時間で語られるため。 */
 const formatDuration = (event: StoredEvent): string => {
-  const days = event.durationDays > 0 ? `${event.durationDays}日` : ''
-  const hours = event.durationHours > 0 ? `${event.durationHours}時間` : ''
-  const label = `${days}${hours}`
-  return label.length > 0 ? label : '不明'
+  const total = event.durationDays * 24 + event.durationHours
+  return total > 0 ? `${total}時間` : '不明'
 }
 
 const formatVenue = (event: StoredEvent): string => {

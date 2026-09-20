@@ -5,12 +5,13 @@ type ScheduleSectionProps = {
   event: EventDetail
 }
 
-/** embed.ts の formatDuration と同じ言い回し。両方 0 のときだけ「不明」にする。 */
+/**
+ * 日と時間に分けず通しの時間数で出す。CTF は「48 時間」のように時間で語られるので、
+ * そのほうが長さを比べやすい。両方 0 のときだけ「不明」。
+ */
 const durationLabel = (event: EventDetail): string => {
-  const days = event.durationDays > 0 ? `${event.durationDays}日` : ''
-  const hours = event.durationHours > 0 ? `${event.durationHours}時間` : ''
-  const label = `${days}${hours}`
-  return label.length > 0 ? label : '不明'
+  const total = event.durationDays * 24 + event.durationHours
+  return total > 0 ? `${total}時間` : '不明'
 }
 
 /** Discord embed の「開催」フィールド相当。ローカル時刻を主役に、UTC はツールチップに置く。 */

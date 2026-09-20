@@ -14,12 +14,12 @@ type EventRowProps = {
   className?: string
 }
 
-/** 「2日7時間」のような開催期間の短い表記。 */
-const formatDuration = (days: number, hours: number): string => {
-  if (days > 0 && hours > 0) return `${days}日${hours}時間`
-  if (days > 0) return `${days}日`
-  return `${hours}時間`
-}
+/**
+ * 開催時間は日と時間に分けず、通しの時間数で出す。
+ * CTF は「48 時間」「72 時間」のように時間で語られることが多く、
+ * 「2日7時間」より「55時間」のほうが長さを比べやすい。
+ */
+const formatDuration = (days: number, hours: number): string => `${days * 24 + hours}時間`
 
 /**
  * イベント 1 件ぶんの行。一覧ページとホームの帯の両方から使う共通の見せ方。
@@ -41,11 +41,12 @@ const formatDuration = (days: number, hours: number): string => {
 export const EventRow = ({ event, showSummary = true, className }: EventRowProps) => (
   <div
     className={cn(
-      'group relative flex gap-3 border-l-2 border-transparent py-3 pl-3',
+      'group relative flex flex-wrap gap-x-3 gap-y-1 border-l-2 border-transparent py-3 pl-3',
       'transition-colors hover:border-primary focus-within:border-primary',
       className,
     )}
   >
+    {/* ロゴが無いイベントもあるので、枠だけ残して本文の開始位置を行ごとに揃える。 */}
     {event.logo.length > 0 ? (
       <img
         src={event.logo}
@@ -53,9 +54,11 @@ export const EventRow = ({ event, showSummary = true, className }: EventRowProps
         loading="lazy"
         className="mt-0.5 size-16 shrink-0 rounded object-contain"
       />
-    ) : null}
+    ) : (
+      <div className="mt-0.5 size-16 shrink-0" aria-hidden="true" />
+    )}
 
-    <div className="min-w-0 flex-1 space-y-1">
+    <div className="min-w-0 flex-1 basis-0 space-y-1">
       <h3 className="text-base leading-snug font-semibold">
         <Link
           to="/events/$eventId"
@@ -107,13 +110,20 @@ export const EventRow = ({ event, showSummary = true, className }: EventRowProps
           eventId={event.id}
           className="relative z-10"
         />
-        <span className="text-xs text-muted-foreground">
-          CTFTime 登録 {event.ctftimeParticipants.toLocaleString('ja-JP')} チーム
-        </span>
-        <span className="text-xs text-muted-foreground">
-          Discord 参加 {event.discordParticipants.toLocaleString('ja-JP')} 人
-        </span>
       </div>
+    </div>
+
+    {/*
+      バッジの後ろに流すと折り返し位置しだいで行ごとにずれるので、固定幅の列にして縦に揃える。
+      狭い画面では w-full で折り返り、行の下に回る。
+      出すのは CTFTime の登録チーム数だけ。規模が分かるのはこちらで、
+      Discord の参加表明数は詳細ページで見れば足りる。
+    */}
+    <div className="w-full shrink-0 sm:w-28 sm:text-right">
+      <div className="text-sm font-medium tabular-nums">
+        {event.ctftimeParticipants.toLocaleString('ja-JP')}
+      </div>
+      <div className="text-xs text-muted-foreground">参加チーム</div>
     </div>
   </div>
 )
