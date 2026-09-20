@@ -17,9 +17,30 @@ const NAV_ITEMS = [
   { to: '/about', label: 'About' },
 ] as const
 
+/**
+ * 現在地は下線で示す。border は常に 2px 確保しておき、色だけ変える
+ * （出し入れすると項目の高さが変わって、ヘッダーごと揺れるため）。
+ *
+ * 色の指定に activeProps の className を使うと、border-transparent と
+ * border-primary が同じ詳細度で競合して CSS の定義順次第になる。
+ * TanStack Router が付ける data-status="active" を属性セレクタで拾えば
+ * 詳細度が上がるので、こちらで確実に上書きする。
+ */
 const NAV_LINK_CLASS_NAME =
-  'text-sm font-medium text-muted-foreground transition-colors hover:text-foreground'
-const NAV_LINK_ACTIVE_PROPS = { className: 'text-foreground' }
+  'inline-flex h-14 items-center border-b-2 border-transparent text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[status=active]:border-primary data-[status=active]:text-foreground'
+
+/** モバイルメニューは縦並びなので、下線ではなく左の線で示す。 */
+const MENU_LINK_CLASS_NAME =
+  'border-l-2 border-transparent pl-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[status=active]:border-primary data-[status=active]:text-foreground'
+
+/** 見た目は data-status で当てるので、activeProps は支援技術向けの印だけ持つ。 */
+const ACTIVE_PROPS = { 'aria-current': 'page' } as const
+
+/**
+ * `/` は前方一致だと全ページに一致してしまうので、ホームだけ完全一致にする。
+ * 逆にイベントは /events/123 でも「イベント」を選択状態にしたいので前方一致のまま。
+ */
+const isExact = (to: string): boolean => to === '/'
 
 export const SiteHeader = () => (
   <header className="border-b bg-background">
@@ -34,7 +55,8 @@ export const SiteHeader = () => (
             key={item.to}
             to={item.to}
             className={NAV_LINK_CLASS_NAME}
-            activeProps={NAV_LINK_ACTIVE_PROPS}
+            activeProps={ACTIVE_PROPS}
+            activeOptions={{ exact: isExact(item.to) }}
           >
             {item.label}
           </Link>
@@ -56,8 +78,9 @@ export const SiteHeader = () => (
               <Link
                 key={item.to}
                 to={item.to}
-                className={NAV_LINK_CLASS_NAME}
-                activeProps={NAV_LINK_ACTIVE_PROPS}
+                className={MENU_LINK_CLASS_NAME}
+                activeProps={ACTIVE_PROPS}
+                activeOptions={{ exact: isExact(item.to) }}
               >
                 {item.label}
               </Link>

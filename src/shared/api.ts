@@ -115,6 +115,11 @@ export type EventSummary = z.infer<typeof EventSummarySchema>
 
 export const EventDetailSchema = EventSummarySchema.extend({
   description: text,
+  /**
+   * 賞品・賞金の記載。完全な自由記述で、金額のことも現物のことも、
+   * 「TBD」だけのことも空のこともある。構造化せず原文のまま渡す。
+   */
+  prizes: text,
   organizers: z.array(text).default([]),
 })
 

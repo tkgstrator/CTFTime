@@ -172,6 +172,7 @@ export const toEventSummary = (event: StoredEvent, discordParticipants: number):
 export const toEventDetail = (event: StoredEvent, discordParticipants: number): EventDetail => ({
   ...toEventSummary(event, discordParticipants),
   description: event.description,
+  prizes: event.prizes,
   organizers: event.organizers,
 })
 

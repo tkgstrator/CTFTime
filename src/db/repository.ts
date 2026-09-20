@@ -39,6 +39,8 @@ export const EventRowSchema = z
     duration_days: z.number().int(),
     duration_hours: z.number().int(),
     description: storedText,
+    // 0003 より前の行は空文字。次の同期で埋まる。
+    prizes: storedText.default(''),
     organizers: jsonStringArray,
     ai_policy: z.enum(AI_POLICY_VALUES).catch('unknown'),
     ai_snippets: jsonStringArray,
@@ -63,6 +65,7 @@ export const EventRowSchema = z
       durationDays: row.duration_days,
       durationHours: row.duration_hours,
       description: row.description,
+      prizes: row.prizes,
       organizers: row.organizers,
       aiPolicy: row.ai_policy,
       aiSnippets: row.ai_snippets,
@@ -89,8 +92,8 @@ const UPSERT_EVENT_SQL = `
 INSERT INTO events (
   id, ctf_id, title, url, ctftime_url, logo, format, restrictions, onsite, location,
   weight, participants, start_at, finish_at, duration_days, duration_hours,
-  description, organizers, ai_policy, ai_snippets, created_at, updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  description, prizes, organizers, ai_policy, ai_snippets, created_at, updated_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(id) DO UPDATE SET
   title = excluded.title,
   url = excluded.url,
@@ -107,6 +110,7 @@ ON CONFLICT(id) DO UPDATE SET
   duration_days = excluded.duration_days,
   duration_hours = excluded.duration_hours,
   description = excluded.description,
+  prizes = excluded.prizes,
   organizers = excluded.organizers,
   ai_policy = excluded.ai_policy,
   ai_snippets = excluded.ai_snippets,
@@ -161,6 +165,7 @@ export const upsertEvents = async (
         event.durationDays,
         event.durationHours,
         event.description,
+        event.prizes,
         JSON.stringify(event.organizers),
         event.aiPolicy,
         JSON.stringify(event.aiSnippets),

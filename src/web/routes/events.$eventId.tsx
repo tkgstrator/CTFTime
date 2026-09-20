@@ -7,6 +7,7 @@ import { EventHero } from '@/web/components/event-detail/event-hero'
 import { NotificationTimeline } from '@/web/components/event-detail/notification-timeline'
 import { ParticipantList } from '@/web/components/event-detail/participant-list'
 import { ParticipationSection } from '@/web/components/event-detail/participation'
+import { PrizesSection } from '@/web/components/event-detail/prizes'
 import { ScheduleSection } from '@/web/components/event-detail/schedule'
 import { buttonVariants } from '@/web/components/ui/button'
 import { Separator } from '@/web/components/ui/separator'
@@ -45,6 +46,8 @@ function EventDetailPage() {
       <ScheduleSection event={event} />
       <Separator className="my-8" />
       <ParticipationSection event={event} />
+      <Separator className="my-8" />
+      <PrizesSection prizes={event.prizes} />
       <Separator className="my-8" />
       <AiPolicySection policy={event.aiPolicy} snippets={event.aiSnippets} />
       <Separator className="my-8" />

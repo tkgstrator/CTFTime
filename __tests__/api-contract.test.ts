@@ -74,7 +74,12 @@ describe('EventListResponseSchema', () => {
 describe('EventDetailResponseSchema', () => {
   test('詳細レスポンス（参加者・通知履歴込み）の往復', () => {
     const body = {
-      event: { ...EVENT_SUMMARY_FIXTURE, description: '長い説明文', organizers: ['bdhxgrp'] },
+      event: {
+        ...EVENT_SUMMARY_FIXTURE,
+        description: '長い説明文',
+        prizes: 'Total Prize Pool: 2 BTC',
+        organizers: ['bdhxgrp'],
+      },
       participants: [{ userId: '123456789', displayName: 'alice', avatarHash: 'abcdef' }],
       notifications: [{ kind: 'new', sentAt: '2026-06-01T00:00:00.000Z' }],
     }
@@ -88,7 +93,7 @@ describe('EventDetailResponseSchema', () => {
 
   test('display_name / avatar_hash が空文字の古い参加者行も通る', () => {
     const body = {
-      event: { ...EVENT_SUMMARY_FIXTURE, description: '', organizers: [] },
+      event: { ...EVENT_SUMMARY_FIXTURE, description: '', prizes: '', organizers: [] },
       participants: [{ userId: '999', displayName: '', avatarHash: '' }],
       notifications: [],
     }
