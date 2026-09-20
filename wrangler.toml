@@ -48,6 +48,12 @@ local_protocol = "http"
 name = "ctftime-bot-staging"
 workers_dev = true
 
+# top-level の [triggers] は各環境に継承されるため、明示的に空にして打ち消す。
+# production と同じチャンネルを見ているので、放っておくと告知が二重に飛ぶ。
+# staging の定期実行を試すときは /cdn-cgi/local/scheduled を手で叩く。
+[env.staging.triggers]
+crons = []
+
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "ctftime-bot-staging"
@@ -74,6 +80,12 @@ head_sampling_rate = 1
 [env.production]
 name = "ctftime-bot"
 workers_dev = false
+
+# Web UI の公開先。custom_domain = true にすると wrangler が
+# qleap.jp ゾーンに CNAME を作り、証明書の発行までやってくれる。
+[[env.production.routes]]
+pattern = "ctf.qleap.jp"
+custom_domain = true
 
 [[env.production.d1_databases]]
 binding = "DB"
