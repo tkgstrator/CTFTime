@@ -107,7 +107,7 @@ function HomePage() {
         <StatNumber label="総イベント数" value={summary.totals.events} />
         <StatNumber label="開催中" value={summary.totals.running} />
         <StatNumber label="開催予定" value={summary.totals.upcoming} />
-        <StatNumber label="Discord 告知済み" value={summary.totals.announced} />
+        <StatNumber label="終了" value={summary.totals.past} />
       </div>
 
       <Separator className="my-8" />

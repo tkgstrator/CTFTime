@@ -187,6 +187,22 @@ export const countEvents = async (db: D1Database): Promise<number> => {
   return row === undefined ? 0 : row.count
 }
 
+/**
+ * 保有しているイベントのうち最も早い開始時刻。events が空なら null。
+ *
+ * 過去の一括取り込みを「もう済んでいるか」の判定に使う。専用のフラグを持たず
+ * これで代用しているのは、取り込みが済めば最古が自然と過去へ伸びて
+ * 条件が成立しなくなるため。状態を別に持つと実態とずれる余地ができる。
+ */
+export const getOldestEventStart = async (db: D1Database): Promise<string | null> => {
+  const { results } = await db.prepare('SELECT MIN(start_at) AS oldest FROM events').all()
+  // MIN() は行が無ければ NULL。空文字は start_at の NOT NULL 制約側で起こり得ないので弾く。
+  const parsed = z.array(z.object({ oldest: z.string().nonempty().nullable() })).safeParse(results)
+  if (!parsed.success) return null
+  const row = parsed.data[0]
+  return row === undefined ? null : row.oldest
+}
+
 export const getEvent = async (db: D1Database, eventId: number): Promise<StoredEvent | null> => {
   const { results } = await db.prepare('SELECT * FROM events WHERE id = ?').bind(eventId).all()
   const events = toEvents(results)

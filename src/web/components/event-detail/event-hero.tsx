@@ -46,16 +46,6 @@ export const EventHero = ({ event }: EventHeroProps) => (
           {venueLabel(event)}
         </Badge>
         <Badge variant="outline">Weight {event.weight.toFixed(2)}</Badge>
-        {event.announced ? (
-          <Badge className="bg-ai-positive text-ai-positive-foreground">Discord 告知済み</Badge>
-        ) : (
-          <Badge
-            variant="secondary"
-            title="weight・オンサイト・参加条件・形式のいずれかで告知フィルタに外れています。"
-          >
-            Discord 未告知
-          </Badge>
-        )}
       </div>
       {event.organizers.length > 0 ? (
         <p className="text-sm text-muted-foreground">主催: {event.organizers.join(', ')}</p>

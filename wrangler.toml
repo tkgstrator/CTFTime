@@ -22,6 +22,8 @@ ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
+# 起動時に過去どこまで遡って取り込むか。0 で無効。一度埋まれば再実行されない。
+BACKFILL_DAYS = "365"
 
 # SPA（src/web）を同じ Worker から配信する。
 # directory は `vite build` が生成する設定に自動で入るのでここには書かない。
@@ -67,6 +69,8 @@ ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
+# 起動時に過去どこまで遡って取り込むか。0 で無効。一度埋まれば再実行されない。
+BACKFILL_DAYS = "365"
 
 [env.staging.assets]
 binding = "ASSETS"
@@ -100,6 +104,8 @@ ANNOUNCE_ONSITE = "false"
 ANNOUNCE_RESTRICTIONS = "Open"
 ANNOUNCE_FORMATS = "Jeopardy,Attack-Defense,Hack quest"
 LOOKAHEAD_DAYS = "60"
+# 起動時に過去どこまで遡って取り込むか。0 で無効。一度埋まれば再実行されない。
+BACKFILL_DAYS = "365"
 
 [env.production.assets]
 binding = "ASSETS"

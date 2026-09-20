@@ -11,10 +11,10 @@ import type { Dayjs } from 'dayjs'
 import { z } from 'zod'
 import {
   EMPTY_PRIZE_VALUES,
-  hasStatedPrize,
   type EventDetail,
   type EventQuery,
   type EventSummary,
+  hasStatedPrize,
 } from '@/shared/api'
 import type { StoredEvent } from './model'
 import { EventRowSchema } from './repository'
