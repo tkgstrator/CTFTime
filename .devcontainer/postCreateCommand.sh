@@ -22,15 +22,14 @@ if [ -f package.json ]; then
   fi
 fi
 
-# Chromium needs system libraries that the base image does not ship, and
-# bun install --ignore-scripts skips the postinstall that would fetch them.
-# The library list does not depend on the browser build, so the devDependency
-# is the right source for it.
+# Chromium needs system libraries the base image does not ship. install-browser
+# below fetches only the browser, so without these it downloads a binary that
+# cannot start (it fails on libglib). playwright is pulled in transiently just
+# to enumerate the packages — the project itself does not depend on it.
 sudo env "PATH=$PATH" bunx playwright install-deps chromium
 
-# The browser build itself is pinned by the Playwright MCP server, not by the
-# playwright devDependency — they currently resolve to different revisions, so
-# letting the MCP download its own is what keeps the browser usable from Claude.
-# The cache lives inside the container, so a rebuild re-downloads ~115 MB.
+# The browser build is pinned by the Playwright MCP server, so let the MCP
+# download the revision it will actually launch. The cache lives inside the
+# container, so a rebuild re-downloads ~115 MB.
 bunx @playwright/mcp install-browser chrome-for-testing || \
   echo "postCreate: browser download failed; run 'bunx @playwright/mcp install-browser chrome-for-testing' by hand"
