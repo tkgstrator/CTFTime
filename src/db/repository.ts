@@ -187,6 +187,31 @@ export const countEvents = async (db: D1Database): Promise<number> => {
   return row === undefined ? 0 : row.count
 }
 
+/** 同期の進捗メモ。未設定なら null。 */
+export const getSyncState = async (db: D1Database, key: string): Promise<string | null> => {
+  const { results } = await db.prepare('SELECT value FROM sync_state WHERE key = ?').bind(key).all()
+  // 空文字を書く用途が無いので、来たら未設定と同じ扱いにする。
+  const parsed = z.array(z.object({ value: z.string().nonempty() })).safeParse(results)
+  if (!parsed.success) return null
+  const row = parsed.data[0]
+  return row === undefined ? null : row.value
+}
+
+export const setSyncState = async (
+  db: D1Database,
+  key: string,
+  value: string,
+  now: Dayjs,
+): Promise<void> => {
+  await db
+    .prepare(
+      `INSERT INTO sync_state (key, value, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    )
+    .bind(key, value, now.toISOString())
+    .run()
+}
+
 /**
  * 保有しているイベントのうち最も早い開始時刻。events が空なら null。
  *
