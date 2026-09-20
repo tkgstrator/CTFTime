@@ -33,7 +33,7 @@ export const AnnouncementBadge = ({ announced, className }: AnnouncementBadgePro
       </HoverCardTrigger>
       <HoverCardContent className="space-y-2 text-sm">
         <p className="text-muted-foreground">
-          重みや開催形式・参加制限などの告知条件を満たさなかったため、Discord には流れていません。
+          Weight や開催形式・参加制限などの告知条件を満たさなかったため、Discord には流れていません。
         </p>
         <Link to="/about" className="text-primary underline underline-offset-4">
           告知条件を確認する

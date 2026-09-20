@@ -135,7 +135,7 @@ function HomePage() {
       <SectionHeading title="注目" moreSearch={{ range: 'upcoming', sort: '-weight' }} />
       <EventList
         events={featured}
-        emptyTitle="重みが付いた開催予定の CTF はまだありません"
+        emptyTitle="Weight が付いた開催予定の CTF はまだありません"
         emptyDescription="CTFTime 側で weight が確定すると表示されます。"
         showSummary={false}
         className="mt-2"

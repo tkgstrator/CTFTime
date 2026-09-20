@@ -72,16 +72,17 @@ export const EventRow = ({ event, showSummary = true, className }: EventRowProps
         </Link>
       </h3>
 
+      {/* 一覧では相対表示（5日後）を出さない。日付が並んでいれば近さは読み取れる。 */}
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
-        <EventTime iso={event.startAt} />
+        <EventTime iso={event.startAt} withCountdown={false} />
         <span className="text-muted-foreground">〜</span>
         <EventTime iso={event.finishAt} withCountdown={false} />
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground">
           ({formatDuration(event.durationDays, event.durationHours)})
         </span>
         {event.onsite && event.location.length > 0 ? (
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPinIcon className="size-3 shrink-0" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
+            <MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />
             {event.location}
           </span>
         ) : null}
@@ -99,7 +100,8 @@ export const EventRow = ({ event, showSummary = true, className }: EventRowProps
         {event.restrictions.length > 0 ? (
           <Badge variant="secondary">{event.restrictions}</Badge>
         ) : null}
-        {event.weight > 0 ? <Badge variant="outline">重み {event.weight}</Badge> : null}
+        {/* CTFTime が Weight と呼んでいる値。本家を見に行ったときに迷わないよう英語のまま。 */}
+        {event.weight > 0 ? <Badge variant="outline">Weight {event.weight}</Badge> : null}
         {/* 自前のホバーカードを持つので、行を覆うリンクより上に置く。 */}
         <span className="relative z-10">
           <AnnouncementBadge announced={event.announced} />

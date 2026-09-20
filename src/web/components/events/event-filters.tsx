@@ -27,8 +27,8 @@ type EventFiltersProps = {
 const SORT_LABELS: Record<EventQuery['sort'], string> = {
   start: '開始が早い順',
   '-start': '開始が遅い順',
-  weight: '重みが低い順',
-  '-weight': '重みが高い順',
+  weight: 'Weight が低い順',
+  '-weight': 'Weight が高い順',
   participants: 'CTFTime 登録チームが少ない順',
   '-participants': 'CTFTime 登録チームが多い順',
   title: 'タイトル順',
