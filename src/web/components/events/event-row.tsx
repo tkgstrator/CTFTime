@@ -5,7 +5,6 @@ import { AiPolicyBadge } from '@/web/components/common/ai-policy-badge'
 import { EventTime } from '@/web/components/common/event-time'
 import { Badge } from '@/web/components/ui/badge'
 import { cn } from '@/web/lib/utils'
-import { AnnouncementBadge } from './announcement-badge'
 
 type EventRowProps = {
   event: EventSummary
@@ -102,16 +101,19 @@ export const EventRow = ({ event, showSummary = true, className }: EventRowProps
         ) : null}
         {/* CTFTime が Weight と呼んでいる値。本家を見に行ったときに迷わないよう英語のまま。 */}
         {event.weight > 0 ? <Badge variant="outline">Weight {event.weight}</Badge> : null}
-        {/* 自前のホバーカードを持つので、行を覆うリンクより上に置く。 */}
-        <span className="relative z-10">
-          <AnnouncementBadge announced={event.announced} />
-        </span>
-        <AiPolicyBadge
-          policy={event.aiPolicy}
-          aiSnippets={event.aiSnippets}
-          eventId={event.id}
-          className="relative z-10"
-        />
+        {/*
+          記載なし（unknown）はほとんどのイベントが該当するので一覧では出さない。
+          全行に同じバッジが並ぶだけで、AI 方針に触れている数件が逆に埋もれる。
+          詳細ページでは 4 状態すべてを根拠つきで出す。
+        */}
+        {event.aiPolicy === 'unknown' ? null : (
+          <AiPolicyBadge
+            policy={event.aiPolicy}
+            aiSnippets={event.aiSnippets}
+            eventId={event.id}
+            className="relative z-10"
+          />
+        )}
       </div>
     </div>
 
