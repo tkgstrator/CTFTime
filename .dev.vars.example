@@ -1,0 +1,10 @@
+# Discord Developer Portal > Applications > あなたの Bot から取得する
+# General Information > Application ID
+DISCORD_APPLICATION_ID=""
+# General Information > Public Key（インタラクションの署名検証に使う）
+DISCORD_PUBLIC_KEY=""
+# Bot > Token（Reset Token で発行。一度しか表示されない）
+DISCORD_BOT_TOKEN=""
+
+# wrangler.toml の [vars] をローカルで上書きしたい場合のみ記述する
+# DISCORD_CHANNEL_ID=""

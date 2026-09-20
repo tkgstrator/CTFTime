@@ -1,0 +1,33 @@
+{
+  "name": "ctftime-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "typecheck": "tsc --noEmit",
+    "lint": "bunx --bun biome check",
+    "format": "bunx --bun biome check --write",
+    "test": "bun test",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "db:migrate:local": "wrangler d1 migrations apply ctftime-bot --local",
+    "db:migrate": "wrangler d1 migrations apply ctftime-bot --remote",
+    "discord:register": "bun run scripts/register-commands.ts"
+  },
+  "dependencies": {
+    "@commitlint/config-conventional": "^21.2.0",
+    "commitlint": "^21.2.1",
+    "conventional-changelog-conventionalcommits": "^10.2.1",
+    "dayjs": "^1.11.13",
+    "hono": "^4",
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2",
+    "@cloudflare/workers-types": "^4",
+    "@types/bun": "^1",
+    "typescript": "^7",
+    "wrangler": "^4"
+  }
+}
