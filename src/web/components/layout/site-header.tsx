@@ -45,7 +45,8 @@ const isExact = (to: string): boolean => to === '/'
 export const SiteHeader = () => (
   <header className="border-b bg-background">
     <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-      <Link to="/" className="text-base font-semibold">
+      {/* ナビが text-sm なので、サイト名は 1 段上げて主従をはっきりさせる。 */}
+      <Link to="/" className="text-xl font-semibold tracking-tight">
         CTFTime Watch
       </Link>
 
