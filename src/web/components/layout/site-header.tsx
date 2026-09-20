@@ -46,7 +46,7 @@ export const SiteHeader = () => (
   <header className="border-b bg-background">
     <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
       <Link to="/" className="text-base font-semibold">
-        ctftime-bot
+        CTFTime Watch
       </Link>
 
       <nav className="hidden items-center gap-6 sm:flex">
